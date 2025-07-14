@@ -6,21 +6,26 @@ $domain = 'https://galvin.my.id/project/';
 $baseUrl = $domain;
 $baseUrlAdmin = $baseUrl.'admin/';
 $baseUrlThumbnail = $baseUrl.'images/';
-$loginUrl = $baseUrlAdmin.'login.php';
+$loginUrl = $baseUrl.'login.php';
+$site_title = 'Neu Cooking | Admin Dashboard';
 
-// if (!isset($_SESSION['admin_username'])) {
-//     echo "<script type='text/javascript'>
-//         window.location.href = '$loginUrl';
-//     </script>";
-//     exit();
-// }
+if (!isset($_SESSION['admin_username'])) {
+    echo "<script type='text/javascript'>
+        window.location.href = '$loginUrl';
+    </script>";
+    exit();
+}
+?>
+
+<?php 
+require 'data.php';
 ?>
 <!doctype html>
 <html lang="en">
 <head>  
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard</title>
+    <title><?php echo $site_title ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -427,40 +432,35 @@ $loginUrl = $baseUrlAdmin.'login.php';
                                     </tr>
                                 </thead>
                                 <tbody class="table-group-divider">
-                                    <tr>
-                                        <td class="align-middle">
-                                            <div class="fw-medium">Footer Text</div>
-                                        </td>
-                                        <td class="align-middle">
-                                            <form method="POST">
-                                                <?php 
-                                                $query = "SELECT setting_key, setting_value FROM db_website_settings WHERE setting_key IN (
-                                                    'footer_text',
-                                                    'title'
-                                                )";
-
-                                                $result = $conn->query($query);
-                                                $settings = [];
-                                                while ($row = $result->fetch_assoc()) {
-                                                    $settings[$row['setting_key']] = $row['setting_value'];
-                                                }
-
-                                                $footerText = $settings['footer_text'];
-                                                $title = $settings['title'];
-
-                                                if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                                                    $newFooterText = $conn->real_escape_string($_POST['footer_text']);
-                                                    $updateQuery = "UPDATE db_website_settings SET setting_value = '$newFooterText' WHERE setting_key = 'footer_text'";
-                                                    $conn->query($updateQuery);
-                                                }
-                                                ?>
+                                    <form method="POST">
+                                        <tr>
+                                            <td>
+                                                <div class="fw-medium">Title</div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <textarea name="title" class="form-control" rows="1"><?php echo ($title); ?></textarea>
+                                            </td>
+                                        <tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-medium">Subtitle</div>
+                                            </td>
+                                            <td class="align-middle">
+                                                <textarea name="subtitle" class="form-control" rows="1"><?php echo ($subtitle); ?></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-medium">Footer Text</div>
+                                            </td>
+                                            <td class="align-middle">
                                                 <textarea name="footer_text" class="form-control" rows="10"><?php echo ($footerText); ?></textarea>
                                                 <div class="d-flex justify-content-end mt-3 mb-2">
                                                     <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
                                                 </div>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+                                    </form>
                                 </tbody>
                             </table>
                         </div>

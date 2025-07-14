@@ -203,7 +203,102 @@
         }
 
         /* Styling untuk log-in form dan register form */
-        .popup-overlay {
+        .popup-container {
+            max-width: 400px;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .popup-overlay.active .popup-container {
+            transform: scale(1) translateY(0);
+        }
+
+        .popup-header {
+            padding: 30px 30px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .popup-title {
+            color: var(--secondary-text-color);
+        }
+
+        .close-btn {
+            top: 20px;
+            right: 20px;
+            background: none;
+            color: #999;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #f5f5f5;
+            color: var(--secondary-text-color);
+        }
+
+        .popup-body {
+            padding: 30px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-label {
+            color: var(--secondary-text-color);
+        }
+
+        .form-input {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-input:focus, .form-control:focus, .comment-form:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(242, 124, 30, 0.1);
+        }
+
+        .forgot-password a {
+            color: var(--primary-color);
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: var(--tertiary-color);
+        }
+
+        .form-footer {
+            border-top: 1px solid #f0f0f0;
+            color: #666;
+        }
+
+        .form-footer a {
+            color: var(--primary-color);
+            transition: color 0.3s ease;
+        }
+
+        .form-footer a:hover {
+            color: var(--tertiary-color);
+        }
+
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        /* Log-in & register form end */
+
+        /* Styling untuk log-in form dan register form */
+        /* .popup-overlay {
             top: 0;
             left: 0;
             background: rgba(0, 0, 0, 0.6);
@@ -358,7 +453,7 @@
 
         .form-container.active {
             display: block;
-        }
+        } */
 
         /* Log-in & register form end */
         .main.sidebar-expanded {

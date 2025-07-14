@@ -138,15 +138,15 @@
 
 
         // Log in & Register form pop up
-        function openPopup() {
-            document.getElementById('popupOverlay').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+        // function openPopup() {
+        //     document.getElementById('popupOverlay').classList.add('active');
+        //     document.body.style.overflow = 'hidden';
+        // }
         
-        function closePopup() {
-            document.getElementById('popupOverlay').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
+        // function closePopup() {
+        //     document.getElementById('popupOverlay').classList.remove('active');
+        //     document.body.style.overflow = 'auto';
+        // }
         
         function showLoginForm() {
             document.getElementById('loginForm').classList.add('active');
@@ -162,133 +162,24 @@
             document.getElementById('popupSubtitle').textContent = 'Create your account to get started.';
         }
         
-        function showForgotPassword() {
-            alert('Forgot password functionality would be implemented here.');
-        }
+        // function showForgotPassword() {
+            
+        // }
         
         // Close popup when clicking outside
-        document.getElementById('popupOverlay').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closePopup();
-            }
-        });
+        // document.getElementById('popupOverlay').addEventListener('click', function(e) {
+        //     if (e.target === this) {
+        //         closePopup();
+        //     }
+        // });
         
         // Close popup with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePopup();
-                closePopupReplate();
-            }
-        });
-        
-        // Notifikasi kalau berhasil
-        document.querySelector('#loginForm form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            createClickParticles(e.submitter);
-            setTimeout(() => alert('Login form submitted!'), 300);
-        });
-        
-        document.querySelector('#registerForm form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            createClickParticles(e.submitter);
-            setTimeout(() => alert('Registration form submitted!'), 300);
-        });
-        
-        // Fungsi animasi partikel
-        function createClickParticles(button) {
-            const rect = button.getBoundingClientRect();
-            const particleCount = 12;
-            
-            for (let i = 0; i < particleCount; i++) {
-                createParticle(button, rect);
-            }
-        }
-        
-        function createParticle(button, rect) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            
-            // Random size
-            const size = Math.random() * 5 + 3;
-            particle.style.width = size + 'px';
-            particle.style.height = size + 'px';
-            
-            // Starts from center (tengah-tengah tombol)
-            const startX = rect.width / 2;
-            const startY = rect.height / 2;
-            
-            particle.style.left = startX + 'px';
-            particle.style.top = startY + 'px';
-            
-            // Random direction and distance
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * 80 + 40;
-            const dx = Math.cos(angle) * distance;
-            const dy = Math.sin(angle) * distance;
-            
-            particle.style.setProperty('--dx', dx + 'px');
-            particle.style.setProperty('--dy', dy + 'px');
-            
-            button.appendChild(particle);
-            
-            // Remove particle after animation
-            setTimeout(() => {
-                if (particle.parentNode) {
-                    particle.parentNode.removeChild(particle);
-                }
-            }, 800);
-        }
-        
-        // Add hover particle effect
-        function createHoverParticles(button) {
-            if (button.dataset.hovering === 'true') return;
-            
-            const rect = button.getBoundingClientRect();
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            
-            const size = Math.random() * 4 + 2;
-            particle.style.width = size + 'px';
-            particle.style.height = size + 'px';
-            particle.style.background = 'rgba(255, 255, 255, 0.6)';
-            
-            const x = Math.random() * rect.width;
-            const y = Math.random() * rect.height;
-            
-            particle.style.left = x + 'px';
-            particle.style.top = y + 'px';
-            
-            const dx = (Math.random() - 0.5) * 30;
-            const dy = (Math.random() - 0.5) * 30;
-            
-            particle.style.setProperty('--dx', dx + 'px');
-            particle.style.setProperty('--dy', dy + 'px');
-            
-            button.appendChild(particle);
-            
-            setTimeout(() => {
-                if (particle.parentNode) {
-                    particle.parentNode.removeChild(particle);
-                }
-            }, 800);
-        }
-        
-        // Add continuous hover particles
-        document.querySelectorAll('.submit-btn, .demo-button').forEach(button => {
-            let hoverInterval;
-            
-            button.addEventListener('mouseenter', function() {
-                this.dataset.hovering = 'true';
-                hoverInterval = setInterval(() => {
-                    createHoverParticles(this);
-                }, 150);
-            });
-            
-            button.addEventListener('mouseleave', function() {
-                this.dataset.hovering = 'false';
-                clearInterval(hoverInterval);
-            });
-        });
+        // document.addEventListener('keydown', function(e) {
+        //     if (e.key === 'Escape') {
+        //         closePopup();
+        //         closePopupReplate();
+        //     }
+        // });
 
 
 

@@ -12,12 +12,12 @@
 
             <div class="text-center" style="margin-top: 105px;">
                 <h1 class="fw-bold fs-1 display-4 mb-2"><?php echo ($title); ?></h1>
-                <p class="lead text-muted mb-4">Find the perfect recipe for any meal, moment, or mood.</p>
+                <p class="lead text-muted mb-4"><?php echo ($subtitle); ?></p>
                 <form class="d-flex justify-content-center mb-md-5">
                     <input class="form-control me-2 rounded-4 shadow-sm" type="search" placeholder="Search recipes.." aria-label="Search" style="max-width: 300px">
                     <a href="/project/search-results.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm">Search</a>
                 </form>
-                <div class="topCarousel mt-3 mx-auto col-12 col-sm-12 col-md-10 col-lg-9">
+                <div class="topCarousel mt-3 mx-auto col-12 col-md-10 col-lg-9">
                     <div id="carouselExampleAutoplaying" class="carousel slide" data-bs-ride="carousel" data-bs-interval="2500">
                         <div class="carousel-inner rounded">
                             <div class="carousel-item active">
@@ -55,7 +55,7 @@
                 </div>
             </div>
 
-            <div class="mt-4 mx-auto col-12 col-sm-12 col-md-10 col-lg-9 mb-5">
+            <div class="mt-4 mx-auto col-12 col-md-10 col-lg-9 mb-5">
                 <h5 class="mb-4">Check out the most popular recepies!</h5>
                 <div class="row g-3">
                     <div class="col-12 col-sm-6 col-md-6 col-lg-3">

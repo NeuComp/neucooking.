@@ -24,10 +24,10 @@
                                     <!-- Profile Info -->
                                     <div>
                                         <div class="d-flex flex-wrap align-items-center">
-                                            <h4 class="mb-0 text-dark fw-bold me-2"><?= $user['name'] ?></h4>
-                                            <span class="badge text-dark rounded-pill px-2 py-1 d-inline-flex align-items-center" style="background: <?= $roleColors[$user['role']] ?>;">
+                                            <h4 class="mb-0 text-dark fw-bold me-2">Galvin</h4>
+                                            <span class="badge text-dark rounded-pill px-2 py-1 d-inline-flex align-items-center" style="background: linear-gradient(45deg, #FFD700, #FFA500);">
                                                 <i class="bi bi-star-fill me-1"></i>
-                                                <?= $user['role'] ?>
+                                                Developer
                                             </span>
                                         </div>
                                         <p class="text-muted mb-2">Surabaya, East Java</p>
@@ -63,10 +63,10 @@
                                     <!-- Profile Info -->
                                     <div>
                                         <div class="d-flex flex-wrap align-items-center">
-                                            <h4 class="mb-0 text-dark fw-bold me-2"><?= $user['name'] ?></h4>
-                                            <span class="badge text-dark rounded-pill px-2 py-1 d-inline-flex align-items-center" style="background: <?= $roleColors[$user['role']] ?>;">
+                                            <h4 class="mb-0 text-dark fw-bold me-2">Galvin</h4>
+                                            <span class="badge text-dark rounded-pill px-2 py-1 d-inline-flex align-items-center" style="background: linear-gradient(45deg, #FFD700, #FFA500);">
                                                 <i class="bi bi-star-fill me-1"></i>
-                                                <?= $user['role'] ?>
+                                                Developer
                                             </span>
                                         </div>
                                         <p class="text-muted mb-2">Surabaya, East Java</p>
