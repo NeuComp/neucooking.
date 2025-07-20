@@ -11,8 +11,8 @@
             <?php include 'parts/login-register-form.php'; ?>
 
             <div class="text-center" style="margin-top: 105px;">
-                <h1 class="fw-bold fs-1 display-4 mb-2"><?php echo ($title); ?></h1>
-                <p class="lead text-muted mb-4"><?php echo ($subtitle); ?></p>
+                <h1 class="fw-bold fs-1 display-4 mb-2">neucooking.<?php echo ($title); ?></h1>
+                <p class="lead text-muted mb-4">Let's look for some fun homemade recipies to make!<?php echo ($subtitle); ?></p>
                 <form class="d-flex justify-content-center mb-md-5">
                     <input class="form-control me-2 rounded-4 shadow-sm" type="search" placeholder="Search recipes.." aria-label="Search" style="max-width: 300px">
                     <a href="/project/search-results.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm">Search</a>

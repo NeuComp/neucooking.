@@ -14,9 +14,7 @@ while ($row = $result->fetch_assoc()) {
 $footerText = $settings['footer_text'];
 $title = $settings['title'];
 $subtitle = $settings['subtitle'];
-?>
 
-<?php 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $title = $conn->real_escape_string($_POST['title']);
 $subtitle = $conn->real_escape_string($_POST['subtitle']);

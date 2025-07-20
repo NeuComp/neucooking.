@@ -1,15 +1,10 @@
 <?php
-$url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+require 'admin/config.php';
+require 'admin/data.php';
+
 $site_title = 'Neu Cooking';
 $page = basename($_SERVER['PHP_SELF'], ".php");
-$base_url = 'https://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']) . '/';
 ?>
-
-<?php
-require __DIR__ . '/../admin/config.php';
-require __DIR__ . '/../admin/data.php';
-?>
-
 <!doctype html>
 <html lang="en">
 <head>  

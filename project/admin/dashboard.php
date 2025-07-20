@@ -1,5 +1,6 @@
 <?php
 require 'config.php';
+require 'data.php';
 session_start();
 
 $domain = 'https://galvin.my.id/project/';
@@ -9,16 +10,12 @@ $baseUrlThumbnail = $baseUrl.'images/';
 $loginUrl = $baseUrl.'login.php';
 $site_title = 'Neu Cooking | Admin Dashboard';
 
-if (!isset($_SESSION['admin_username'])) {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     echo "<script type='text/javascript'>
         window.location.href = '$loginUrl';
     </script>";
     exit();
 }
-?>
-
-<?php 
-require 'data.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -82,6 +79,10 @@ require 'data.php';
             <i class="bi bi-gear fs-5 me-2"></i>
             <h6 class="fw-medium mb-0">Website Settings</h6>
         </div>
+        <a href="../logout.php" class="d-flex align-items-center text-white text-decoration-none mb-3">
+            <i class="bi bi-box-arrow-right fs-5 me-2"></i>
+            <h6 class="fw-medium mb-0">Log Out</h6>
+        </a>
     </div>
 
     <div class="main bg-light p-4">

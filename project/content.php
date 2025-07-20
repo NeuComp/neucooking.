@@ -334,6 +334,119 @@
     <!-- End of wrapper -->
     </div>
 
+<script>
+    function openPopupReplate() {
+        document.getElementById('replatePopup').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePopupReplate() {
+        document.getElementById('replatePopup').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        resetForm();
+    }
+
+    function closePopupOnOverlay(event) {
+        if (event.target === event.currentTarget) {
+            closePopupReplate();
+        }
+    }
+
+    function triggerFileInput() {
+        document.getElementById('replateImageInput').click();
+    }
+
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 0.3 * 1024 * 1024) {
+                alert('File size must be or less than 300KB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const container = document.querySelector('.replate-image-upload-container');
+                const preview = document.getElementById('replateImagePreview');
+                const deleteBtn = document.querySelector('.replate-delete-image-btn');
+                const placeholder = document.querySelector('.replate-upload-placeholder');
+
+                preview.src = e.target.result;
+                preview.classList.add('show');
+                deleteBtn.classList.add('show');
+                placeholder.style.display = 'none';
+                container.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function deleteImage(event) {
+        event.stopPropagation();
+        
+        const container = document.querySelector('.replate-image-upload-container');
+        const preview = document.getElementById('replateImagePreview');
+        const deleteBtn = document.querySelector('.replate-delete-image-btn');
+        const placeholder = document.querySelector('.replate-upload-placeholder');
+        const fileInput = document.getElementById('replateImageInput');
+
+        preview.classList.remove('show');
+        deleteBtn.classList.remove('show');
+        placeholder.style.display = 'block';
+        container.classList.remove('has-image');
+        fileInput.value = '';
+    }
+
+    function updateCharCount() {
+        const textarea = document.getElementById('replateDescriptionText');
+        const charCount = document.getElementById('replateCharCount');
+        const currentLength = textarea.value.length;
+        
+        charCount.textContent = `${currentLength} / 500`;
+        
+        if (currentLength > 450) {
+            charCount.style.color = '#dc3545';
+        } else if (currentLength > 400) {
+            charCount.style.color = '#fd7e14';
+        } else {
+            charCount.style.color = '#6c757d';
+        }
+    }
+
+    function submitReplate() {
+        const description = document.getElementById('replateDescriptionText').value.trim();
+        const imageInput = document.getElementById('replateImageInput');
+        
+        if (!description) {
+            alert('Please add a description for your replate.');
+            return;
+        }
+
+        if (description.length < 10) {
+            alert('Description must be at least 10 characters long.');
+            return;
+        }
+
+        // Backend di sini
+        alert('Replate submitted successfully!');
+        closePopupReplate();
+    }
+
+    function resetForm() {
+        document.getElementById('replateDescriptionText').value = '';
+        document.getElementById('replateCharCount').textContent = '0 / 500';
+        document.getElementById('replateCharCount').style.color = '#6c757d';
+        deleteImage(new Event('click'));
+    }
+
+    // Prevent form submission on Enter key in textarea
+    document.getElementById('replateDescriptionText').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' && event.ctrlKey) {
+            submitReplate();
+        }
+    });
+</script>
+
 <script> <?php include 'js/script.js'; ?> </script>
 
 </body>

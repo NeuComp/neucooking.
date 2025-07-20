@@ -4,7 +4,7 @@
             <i class="bi bi-list text-white"></i>
         </button>
         <div class="sidebar-logo">
-            <a href="#" class="text-white fw-semibold"><?php echo ($title); ?></a>
+            <a href="#" class="text-white fw-semibold">neucooking.<?php echo ($title); ?></a>
         </div>
     </div>
 

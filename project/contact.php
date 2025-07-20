@@ -13,8 +13,9 @@
             <div class="mx-auto col-12 col-sm-12 col-md-10 col-lg-9 margin-to-footer">
 
                 <div class="content-start row g-3">
+
                     <div class="col-12 d-flex justify-content-center">
-                        <div class="card contact-form border-0 shadow-sm">
+                        <div class="card contact-form border-0 shadow-sm" style="max-width: 650px;">
                             <div class="card-header-contact text-white rounded-top-2 py-4">
                                 <h2 class="mb-2 text-center">Get in Touch</h2>
                                 <p class="d-block d-md-none text-center mb-0 opacity-75 px-3">Send us a message and we'll get back to you as soon as possible.</p>

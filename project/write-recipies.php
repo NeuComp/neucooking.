@@ -1,5 +1,34 @@
-<?php include 'parts/header.php'; ?>
+<?php
+require 'admin/config.php';
+require 'admin/data.php';
+session_start();
 
+$site_title = 'Neu Cooking';
+$domain = 'https://galvin.my.id/project/';
+$baseUrl = $domain;
+$loginUrl = $baseUrl.'login.php';
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    echo "<script type='text/javascript'>
+        window.location.href = '$loginUrl';
+    </script>";
+    exit();
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>  
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo $site_title ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <style> <?php include 'css/style.css'; ?> </style>
+</head>
 <body> 
 
     <div class="wrapper d-flex">
@@ -181,6 +210,220 @@
         </div>
     <!-- End of wrapper -->
     </div>
+
+<script>
+    let ingredientCount = 1;
+    let stepCount = 1;
+    
+    // Photo upload preview
+    document.getElementById('recipePhoto').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                const placeholder = document.querySelector('.upload-placeholder');
+                const previewContainer = document.querySelector('.photo-preview-container');
+                
+                preview.src = e.target.result;
+                previewContainer.classList.remove('d-none');
+                placeholder.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Delete photo functionality
+    document.getElementById('deletePhotoBtn').addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent triggering the file input
+        
+        const preview = document.getElementById('photoPreview');
+        const placeholder = document.querySelector('.upload-placeholder');
+        const previewContainer = document.querySelector('.photo-preview-container');
+        const fileInput = document.getElementById('recipePhoto');
+        
+        // Reset the file input
+        fileInput.value = '';
+        
+        // Hide preview and show placeholder
+        previewContainer.classList.add('d-none');
+        placeholder.style.display = 'block';
+        
+        // Clear the preview image source
+        preview.src = '';
+    });
+    
+    // Add ingredient function
+    function addIngredient() {
+        ingredientCount++;
+        const ingredientsList = document.getElementById('ingredientsList');
+        const newIngredient = document.createElement('div');
+        newIngredient.className = 'ingredient-item p-3 mb-3';
+        newIngredient.innerHTML = `
+            <div class="row g-2 align-items-center">
+                <div class="col-12 col-md-5">
+                    <input type="text" class="form-control recipe-input" 
+                        name="ingredient_name[]" placeholder="Ingredient name">
+                </div>
+                <div class="col-12 col-md-3">
+                    <input type="text" class="form-control recipe-input" 
+                        name="ingredient_amount[]" placeholder="Amount">
+                </div>
+                <div class="col-10 col-md-3">
+                    <input type="text" class="form-control recipe-input" 
+                        name="ingredient_unit[]" placeholder="Unit">
+                </div>
+                <div class="col-2 col-md-1 d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeIngredient(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        ingredientsList.appendChild(newIngredient);
+        updateRemoveButtons('ingredient');
+    }
+    
+    // Remove ingredient function
+    function removeIngredient(button) {
+        button.closest('.ingredient-item').remove();
+        ingredientCount--;
+        updateRemoveButtons('ingredient');
+    }
+    
+    // Add step function
+    function addStep() {
+        stepCount++;
+        const stepsList = document.getElementById('stepsList');
+        const newStep = document.createElement('div');
+        newStep.className = 'step-item rounded-2 p-3 mb-3';
+        newStep.setAttribute('draggable', 'true');
+        newStep.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="step-drag-handle me-2">
+                    <i class="bi bi-grip-vertical text-muted"></i>
+                </div>
+                <span class="step-number d-inline-flex justify-content-center align-items-center text-white rounded-circle fw-bold">${stepCount}</span>
+                <div class="flex-fill">
+                    <textarea class="form-control recipe-textarea step-textarea mb-2" 
+                            name="step_description[]" rows="2" 
+                            placeholder="Explain this step in detail.."></textarea>
+                    <div class="step-photo-upload mt-2">
+                        <input type="file" name="step_photo[]" accept="image/*" class="d-none step-photo-input">
+                        <div class="step-photo-placeholder text-center rounded-2" onclick="this.previousElementSibling.click()">
+                            <i class="bi bi-camera me-2"></i>
+                            <span>Add photo</span>
+                        </div>
+                        <img class="step-photo-preview d-none w-100 object-fit-cover rounded-1 mt-2" alt="Step preview">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeStep(this)" disabled>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        stepsList.appendChild(newStep);
+        updateRemoveButtons('step');
+        
+        // Add event listener for the new step photo input
+        const newPhotoInput = newStep.querySelector('.step-photo-input');
+        newPhotoInput.addEventListener('change', handleStepPhotoUpload);
+    }
+    
+    // Remove step function
+    function removeStep(button) {
+        button.closest('.step-item').remove();
+        stepCount--;
+        updateStepNumbers();
+        updateRemoveButtons('step');
+    }
+    
+    // Update step numbers
+    function updateStepNumbers() {
+        const stepNumbers = document.querySelectorAll('.step-number');
+        stepNumbers.forEach((num, index) => {
+            num.textContent = index + 1;
+        });
+    }
+    
+    // Update remove button states
+    function updateRemoveButtons(type) {
+        const items = document.querySelectorAll(type === 'ingredient' ? '.ingredient-item' : '.step-item');
+        const buttons = document.querySelectorAll(type === 'ingredient' ? 
+            '.ingredient-item .btn-outline-danger' : '.step-item .btn-outline-danger');
+        
+        buttons.forEach((button, index) => {
+            button.disabled = items.length === 1;
+        });
+    }
+    
+    // Form submission
+    document.getElementById('recipeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Basic validation
+        const title = document.getElementById('recipeTitle').value.trim();
+        const ingredients = document.querySelectorAll('input[name="ingredient_name[]"]');
+        const steps = document.querySelectorAll('textarea[name="step_description[]"]');
+        
+        if (!title) {
+            alert('Recipe title has to be filled!');
+            return;
+        }
+        
+        let hasIngredients = false;
+        ingredients.forEach(input => {
+            if (input.value.trim()) hasIngredients = true;
+        });
+        
+        if (!hasIngredients) {
+            alert('Ingredients form has to be filled!');
+            return;
+        }
+        
+        let hasSteps = false;
+        steps.forEach(input => {
+            if (input.value.trim()) hasSteps = true;
+        });
+        
+        if (!hasSteps) {
+            alert('Steps form has to be filled!');
+            return;
+        }
+        
+        // If validation passes, submit the form
+        alert('Recipe has been successfully made! (Waiting for admin authorization.)');
+        // Ini bagian submit, akan ke dashboard admin baru ke content
+        // this.submit();
+    });
+    
+    // Initialize remove button states
+    updateRemoveButtons('ingredient');
+    updateRemoveButtons('step');
+    
+    // Add event listeners for step photo uploads
+    function handleStepPhotoUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            const stepItem = e.target.closest('.step-item');
+            const preview = stepItem.querySelector('.step-photo-preview');
+            const placeholder = stepItem.querySelector('.step-photo-placeholder');
+            
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+                placeholder.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // Add event listener to initial step photo input
+    document.querySelector('.step-photo-input').addEventListener('change', handleStepPhotoUpload);
+</script>
 
 <script> <?php include 'js/script.js'; ?> </script>
 
