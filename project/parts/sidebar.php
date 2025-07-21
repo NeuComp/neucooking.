@@ -7,7 +7,6 @@
             <a href="#" class="text-white fw-semibold">neucooking.<?php echo ($title); ?></a>
         </div>
     </div>
-
     <!-- Mobile-only navigation buttons (hidden on sm and up) 
     <div class="d-block d-lg-none px-2 py-2 border-bottom border-secondary">
         <div class="d-flex flex-column gap-2">
@@ -26,7 +25,6 @@
         </div>
     </div>
     -->
-
     <ul class="sidebar-nav">
         <li class="sidebar-item position-relative">
             <a href="index.php" class="sidebar-link d-block text-white">
@@ -34,7 +32,6 @@
                 <span>Search</span>
             </a>
         </li>
-
         <!-- Multi-two version
         <li class="sidebar-item">
             <a href="#" class="sidebar-link has-dropdown collapsed" data-bs-toggle="collapse" data-bs-target="#multi" 
@@ -60,7 +57,6 @@
             </ul>
         </li>
         -->
-
         <li class="sidebar-item position-relative">
             <a href="#" class="sidebar-link has-dropdown collapsed d-block text-white" data-bs-toggle="collapse" data-bs-target="#auth" 
                 aria-expanded="false" aria-controls="auth">
@@ -85,14 +81,12 @@
                 </li>
             </ul>
         </li>
-
         <li class="sidebar-item position-relative">
             <a href="/project/about.php" class="sidebar-link d-block text-white">
                 <i class="bi bi-info-circle"></i>
                 <span>About us</span>
             </a>
         </li>
-
         <li class="sidebar-item position-relative">
             <a href="/project/contact.php" class="sidebar-link d-block text-white">
                 <i class="bi bi-person-lines-fill"></i>
@@ -100,13 +94,10 @@
             </a>
         </li>
     </ul>
-
-    <!-- Log out
     <div class="sidebar-footer">
-        <a href="#" class="sidebar-link">
+        <a href="logout.php" class="sidebar-link text-white">
             <i class="bi bi-box-arrow-right"></i>
             <span>Log out</span>
         </a>
     </div>
-    -->
 </aside>

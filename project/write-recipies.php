@@ -8,7 +8,7 @@ $domain = 'https://galvin.my.id/project/';
 $baseUrl = $domain;
 $loginUrl = $baseUrl.'login.php';
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     echo "<script type='text/javascript'>
         window.location.href = '$loginUrl';
     </script>";

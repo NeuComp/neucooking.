@@ -8,19 +8,30 @@ $site_title = 'Neu Cooking';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (isset($_POST['logIn'])) {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
-
-        $sql = "SELECT * FROM db_users WHERE email = '".$email."' AND password = '".$password."' ";
+        $email = mysqli_real_escape_string($conn, $_POST['login_email']);
+        $password = $_POST['login_password'];
+        $sql = "SELECT * FROM db_users WHERE email = '".$email."'";
         $result = mysqli_query($conn, $sql);
         $row = mysqli_fetch_assoc($result);
 
-        if($row["role"] == "admin") {
-            $_SESSION['role'] = 'admin';
-            header("Location: admin/dashboard.php");
-        } elseif ($row["role"] == "user") {
-            $_SESSION['role'] = 'user';
-            header("Location: index.php");
+        if($row && password_verify($password, $row["password"])) {
+            $_SESSION['logged_in'] = true;
+            $_SESSION['id'] = $row['id'];
+            $_SESSION['role'] = $row['role'];
+            $_SESSION['email'] = $row['email'];
+            $_SESSION['first_name'] = $row['first_name'];
+            $_SESSION['last_name'] = $row['last_name'];
+            $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
+            $_SESSION['user_photo'] = $row['user_photo'];
+            $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+
+            if($row["role"] == "admin") {
+                header("Location: admin/dashboard.php");
+                exit();
+            } elseif ($row["role"] == "user") {
+                header("Location: index.php");
+                exit();
+            }
         } else {
             $login_error = "Username or password is incorrect.";
         }
@@ -28,23 +39,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     elseif (isset($_POST['signUp'])) {
         $role = 'user';
-        $first_name = $_POST['first_name'];
-        $last_name = $_POST['last_name'];
-        $email = $_POST['signup_email'];
+        $first_name = mysqli_real_escape_string($conn, $_POST['first_name']);
+        $last_name = mysqli_real_escape_string($conn, $_POST['last_name']);
+        $email = mysqli_real_escape_string($conn, $_POST['signup_email']);
         $password = $_POST['signup_password'];
-
         $check_sql = "SELECT * FROM db_users WHERE email = '".$email."'";
         $check_result = mysqli_query($conn, $check_sql);
 
         if (mysqli_num_rows($check_result) > 0) {
             $signup_error = "Email already exists. Please use a different email.";
         } else {
-            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('".$role."', '".$first_name."', '".$last_name."', '".$email."', '".$password."')";
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('".$role."', '".$first_name."', '".$last_name."', '".$email."', '".$hashed_password."')";
             $insert_result = mysqli_query($conn, $insert_sql);
 
             if ($insert_result) {
-                $_SESSION['role'] = 'user';
+                $new_id = mysqli_insert_id($conn);
+                $_SESSION['logged_in'] = true;
+                $_SESSION['id'] = $new_id;
+                $_SESSION['role'] = $role;
                 $_SESSION['email'] = $email;
+                $_SESSION['first_name'] = $first_name;
+                $_SESSION['last_name'] = $last_name;
+                $_SESSION['username'] = $first_name . ' ' . $last_name;
+                $_SESSION['user_photo'] = '';
+                $_SESSION['user_whatsapp'] = '';
+
                 header("Location: index.php");
                 exit();
             } else {
@@ -106,11 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <form action="" method="POST">
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="email">Email</label>
-                                            <input type="email" class="form-input w-100 rounded-2" name="email" id="email" placeholder="Enter your email" required>
+                                            <input type="email" class="form-input w-100 rounded-2" name="login_email" id="login_email" placeholder="Enter your email" required>
                                         </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
-                                            <input type="password" class="form-input w-100 rounded-2" name="password" id="password" placeholder="Enter your password" required>
+                                            <input type="password" class="form-input w-100 rounded-2" name="login_password" id="login_password" placeholder="Enter your password" required>
                                             <div class="forgot-password mt-2 text-end">
                                                 <a href="#" class="text-decoration-none fw-medium" onclick="showForgotPassword()">Forgot password?</a>
                                             </div>
@@ -127,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                                 <div class="form-container" id="registerForm">
                                     <form action="" method="POST">
-                                        <div class="form-row d-none d-sm-flex gap-3">
+                                        <div class="form-row d-md-flex gap-3">
                                             <div class="form-group mb-4">
                                                 <label class="form-label d-block mb-2 fw-semibold" for="firstName">First Name</label>
                                                 <input type="text" class="form-input w-100 rounded-2" name="first_name" id="firstName" placeholder="First name" required>
@@ -137,21 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 <input type="text" class="form-input w-100 rounded-2" name="last_name" id="lastName" placeholder="Last name" required>
                                             </div>
                                         </div>
-                                        <div class="form-group d-sm-none mb-4">
-                                            <label class="form-label d-block mb-2 fw-semibold" for="firstName">First Name</label>
-                                            <input type="text" class="form-input w-100 rounded-2" name="first_name" id="firstName" placeholder="First name" required>
-                                        </div>
-                                        <div class="form-group d-sm-none mb-4">
-                                            <label class="form-label d-block mb-2 fw-semibold" for="lastName">Last Name</label>
-                                            <input type="text" class="form-input w-100 rounded-2" name="last_name" id="lastName" placeholder="Last name" required>
-                                        </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="email">Email</label>
-                                            <input type="email" class="form-input w-100 rounded-2" name="email" id="email" placeholder="Enter your email" required>
+                                            <input type="email" class="form-input w-100 rounded-2" name="signup_email" id="signup_email" placeholder="Enter your email" required>
                                         </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
-                                            <input type="password" class="form-input w-100 rounded-2" name="password" id="password" placeholder="Create a password" required>
+                                            <input type="password" class="form-input w-100 rounded-2" name="signup_password" id="signup_password" placeholder="Create a password" required>
                                         </div>
                                         <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm">
                                             Create Account

@@ -8,14 +8,23 @@ $baseUrl = $domain;
 $baseUrlAdmin = $baseUrl.'admin/';
 $baseUrlThumbnail = $baseUrl.'images/';
 $loginUrl = $baseUrl.'login.php';
+$homeUrl = $baseUrl.'index.php';
 $site_title = 'Neu Cooking | Admin Dashboard';
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    echo "<script type='text/javascript'>
-        window.location.href = '$loginUrl';
-    </script>";
+if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'developer')) {
+
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+        echo "<script type='text/javascript'>
+            window.location.href = '$homeUrl';
+        </script>";
+    } else {
+        echo "<script type='text/javascript'>
+            window.location.href = '$loginUrl';
+        </script>";
+    }
     exit();
 }
+
 ?>
 <!doctype html>
 <html lang="en">
