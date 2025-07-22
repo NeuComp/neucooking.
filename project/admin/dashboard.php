@@ -5,23 +5,23 @@ session_start();
 
 $domain = 'https://galvin.my.id/project/';
 $baseUrl = $domain;
+$homeUrl = $baseUrl.'index.php';
+$loginUrl = $baseUrl.'login.php';
 $baseUrlAdmin = $baseUrl.'admin/';
 $baseUrlThumbnail = $baseUrl.'images/';
-$loginUrl = $baseUrl.'login.php';
-$homeUrl = $baseUrl.'index.php';
 $site_title = 'Neu Cooking | Admin Dashboard';
 
-if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'developer')) {
+if (!isset($_SESSION['logged_in']) && $_SESSION['logged_in'] !== true) {
+    echo "<script type='text/javascript'>
+        window.location.href = '$loginUrl';
+    </script>";
+    exit();
+}
 
-    if (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
-        echo "<script type='text/javascript'>
-            window.location.href = '$homeUrl';
-        </script>";
-    } else {
-        echo "<script type='text/javascript'>
-            window.location.href = '$loginUrl';
-        </script>";
-    }
+if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'developer')) {
+    echo "<script type='text/javascript'>
+        window.location.href = '$homeUrl';
+    </script>";
     exit();
 }
 
@@ -60,45 +60,46 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
 </head>
 <body>
 
-    <div class="sidebar bg-primary fixed-top p-4 shadow-lg">
-        <div class="d-flex text-white mt-2 mb-3">
+    <div class="sidebar d-flex flex-column fixed-top bg-primary p-3 shadow-lg">
+        <div class="d-flex text-white ms-1 mt-2 mb-3">
             <h5 class="fw-bold">Admin Dashboard</h5>
         </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-house fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Dashboard Preview</h6>
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('dashboard')">
+            <i class="bi bi-house me-2"></i> Dashboard Preview
+        </button>
+
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('pending')">
+            <i class="bi bi-clock me-2"></i> Pending Recipes
+        </button>
+
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('recipes')">
+            <i class="bi bi-book me-2"></i> Recipes Management
+        </button>
+
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('roles')">
+            <i class="bi bi-person-check me-2"></i> Role Management
+        </button>
+
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('reports')">
+            <i class="bi bi-journal-bookmark me-2"></i> Reports
+        </button>
+
+        <button class="btn btn-primary w-100 text-start mb-2 sidebar-button" onclick="showSection('settings')">
+            <i class="bi bi-gear me-2"></i> Website Settings
+        </button>
+
+        <div class="mt-auto">
+            <button class="btn btn-primary w-100 text-start sidebar-button" onclick="window.location.href='../logout.php'">
+                <i class="bi bi-box-arrow-right me-2"></i> Log Out
+            </button>
         </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-clock fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Pending Recipes</h6>
-        </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-book fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Recipes Management</h6>
-        </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-person-check fs-5 me-2"></i>
-            <h6 class="fw-medium mt-1 mb-0">Role Management</h6>
-        </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-journal-bookmark fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Reports</h6>
-        </div>
-        <div class="d-flex align-items-center text-white mb-3">
-            <i class="bi bi-gear fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Website Settings</h6>
-        </div>
-        <a href="../logout.php" class="d-flex align-items-center text-white text-decoration-none mb-3">
-            <i class="bi bi-box-arrow-right fs-5 me-2"></i>
-            <h6 class="fw-medium mb-0">Log Out</h6>
-        </a>
     </div>
 
     <div class="main bg-light p-4">
-        <div class="content p-2">
+        <div class="p-2">
             <div class="container">
 
-                <div class="dashboard-review mt-2 mb-5">
+                <div class="content vh-100 mt-2 mb-5" id="dashboard">
                     <div class="mb-4">
                         <h3 class="fw-bold">Dashboard Overview</h3>
                     </div>
@@ -150,7 +151,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                             <li class="d-flex mb-3">
                                                 <i class="bi bi-person-check text-warning fs-3 me-3"></i>
                                                 <div>
-                                                    <span class="text-muted fw-medium">User <strong>"Budi Siregar"</strong> has been entitled to Verified Chef</span><br>
+                                                    <span class="text-muted fw-medium">User <strong>"Budi Siregar"</strong> has been verified as Verified Chef</span><br>
                                                     <span class="text-secondary small">Uploaded 2 minutes ago</span>
                                                 </div>
                                             </li>
@@ -183,7 +184,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     </div>
                 </div>
 
-                <div class="pending-recipes mb-5">
+                <div class="content d-none vh-100 mb-5" id="pending">
                     <div class="d-flex justify-content-between mb-4">
                         <div>
                             <h3 class="fw-bold">Pending Recipes</h3>
@@ -266,7 +267,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     </div>
                 </div>
 
-                <div class="recipes-management mb-5">
+                <div class="content d-none vh-100 mb-5" id="recipes">
                     <div class="d-flex justify-content-between mb-4">
                         <div>
                             <h3 class="fw-bold">Recipes Management</h3>
@@ -344,7 +345,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     </div>
                 </div>
 
-                <div class="role-management mb-5">
+                <div class="content d-none vh-100 mb-5" id="roles">
                     <div class="d-flex justify-content-between mb-4">
                         <div>
                             <h3 class="fw-bold">Role Management</h3>
@@ -421,7 +422,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     </div>
                 </div>
 
-                <div class="website-settings mb-5">
+                <div class="content d-none vh-100 mb-5" id="settings">
                     <div class="d-flex justify-content-between mb-4">
                         <div>
                             <h3 class="fw-bold">Website Settings</h3>
@@ -480,6 +481,21 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
             </div>
         </div>
     </div>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.content').forEach(section => {
+                section.classList.add('d-none');
+            });
+
+            document.getElementById(sectionId)?.classList.remove('d-none');
+
+            document.querySelectorAll('.sidebar-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showSection('${sectionId}')"]`)?.classList.add('active');
+        }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 </body>

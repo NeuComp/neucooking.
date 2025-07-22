@@ -3,38 +3,69 @@ require 'admin/config.php';
 require 'admin/data.php';
 session_start();
 
+$domain = 'https://galvin.my.id/project/';
+$baseUrl = $domain;
+$homeUrl = $baseUrl.'index.php';
+$loginUrl = $baseUrl.'login.php';
+$baseUrlAdmin = $baseUrl.'admin/';
+$baseUrlThumbnail = $baseUrl.'images/';
+$adminUrl = $baseUrlAdmin.'dashboard.php';
 $site_title = 'Neu Cooking';
+
+if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
+    echo "<script type='text/javascript'>
+        window.location.href = '$homeUrl';
+    </script>";
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if (isset($_POST['logIn'])) {
-        $email = mysqli_real_escape_string($conn, $_POST['login_email']);
+        $email = $_POST['login_email'];
         $password = $_POST['login_password'];
-        $sql = "SELECT * FROM db_users WHERE email = '".$email."'";
-        $result = mysqli_query($conn, $sql);
+        $sql = "SELECT * FROM db_users WHERE email = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
 
-        if($row && password_verify($password, $row["password"])) {
-            $_SESSION['logged_in'] = true;
-            $_SESSION['id'] = $row['id'];
-            $_SESSION['role'] = $row['role'];
-            $_SESSION['email'] = $row['email'];
-            $_SESSION['first_name'] = $row['first_name'];
-            $_SESSION['last_name'] = $row['last_name'];
-            $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
-            $_SESSION['user_photo'] = $row['user_photo'];
-            $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+        if($row && $password === $row['password']) {
 
             if($row["role"] == "admin") {
-                header("Location: admin/dashboard.php");
+                $_SESSION['logged_in'] = true;
+                $_SESSION['id'] = $row['id'];
+                $_SESSION['role'] = $row['role'];
+                $_SESSION['email'] = $row['email'];
+                $_SESSION['first_name'] = $row['first_name'];
+                $_SESSION['last_name'] = $row['last_name'];
+                $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
+                $_SESSION['user_photo'] = $row['user_photo'];
+                $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+                echo "<script type='text/javascript'>
+                    window.location.href = '$adminUrl';
+                </script>";
                 exit();
             } elseif ($row["role"] == "user") {
-                header("Location: index.php");
+                $_SESSION['logged_in'] = true;
+                $_SESSION['id'] = $row['id'];
+                $_SESSION['role'] = $row['role'];
+                $_SESSION['email'] = $row['email'];
+                $_SESSION['first_name'] = $row['first_name'];
+                $_SESSION['last_name'] = $row['last_name'];
+                $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
+                $_SESSION['user_photo'] = $row['user_photo'];
+                $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+                echo "<script type='text/javascript'>
+                    window.location.href = '$homeUrl';
+                </script>";
                 exit();
             }
         } else {
-            $login_error = "Username or password is incorrect.";
+            $login_error = "Invalid email or password. Please try again.";
         }
+        mysqli_stmt_close($stmt);
     }
 
     elseif (isset($_POST['signUp'])) {
@@ -49,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (mysqli_num_rows($check_result) > 0) {
             $signup_error = "Email already exists. Please use a different email.";
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('".$role."', '".$first_name."', '".$last_name."', '".$email."', '".$hashed_password."')";
+            // $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('".$role."', '".$first_name."', '".$last_name."', '".$email."', '".$password."')";
             $insert_result = mysqli_query($conn, $insert_sql);
 
             if ($insert_result) {
@@ -165,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
                                             <input type="password" class="form-input w-100 rounded-2" name="signup_password" id="signup_password" placeholder="Create a password" required>
                                         </div>
-                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm">
+                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm" disabled>
                                             Create Account
                                         </button>
                                     </form>

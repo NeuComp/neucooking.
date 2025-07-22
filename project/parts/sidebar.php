@@ -1,3 +1,5 @@
+<?php include 'auth.php'; ?>
+
 <aside id="sidebar" class="sidebar sidebar-collapsed fixed-top vh-100 d-flex flex-column">
     <div class="d-flex">
         <button id="toggle-btn" type="button" class="bg-transparent border-0 fs-4">
@@ -28,8 +30,8 @@
     <ul class="sidebar-nav">
         <li class="sidebar-item position-relative">
             <a href="index.php" class="sidebar-link d-block text-white">
-                <i class="bi bi-search"></i>
-                <span>Search</span>
+                <i class="bi bi-house"></i>
+                <span>Home</span>
             </a>
         </li>
         <!-- Multi-two version
@@ -94,10 +96,12 @@
             </a>
         </li>
     </ul>
-    <div class="sidebar-footer">
-        <a href="logout.php" class="sidebar-link text-white">
-            <i class="bi bi-box-arrow-right"></i>
-            <span>Log out</span>
-        </a>
-    </div>
+    <?php if (isLoggedIn()): ?>
+        <div class="sidebar-footer">
+            <a href="logout.php" class="sidebar-link text-white">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Log out</span>
+            </a>
+        </div>
+    <?php endif; ?>
 </aside>

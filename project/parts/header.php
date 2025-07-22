@@ -1,6 +1,7 @@
 <?php
 require 'admin/config.php';
 require 'admin/data.php';
+session_start();
 
 $site_title = 'Neu Cooking';
 $page = basename($_SERVER['PHP_SELF'], ".php");

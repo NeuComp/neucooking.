@@ -1,3 +1,11 @@
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/home';
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
         const hamburger = document.querySelector('#toggle-btn');
         const sidebar = document.querySelector('#sidebar');
