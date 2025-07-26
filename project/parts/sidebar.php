@@ -91,10 +91,59 @@
         </li>
         <li class="sidebar-item position-relative">
             <a href="/project/contact.php" class="sidebar-link d-block text-white">
-                <i class="bi bi-person-lines-fill"></i>
+                <i class="bi bi-person"></i>
                 <span>Contact</span>
             </a>
         </li>
+        <?php if (isLoggedIn()): ?>
+            <li class="sidebar-item position-relative border-top mx-3 my-4"><li>
+            <!-- <li class="sidebar-item">
+                <form class="d-flex align-items-center" role="search">
+                    <a class="sidebar-link input-group">
+                        <span class="input-group-text bg-white border-0">
+                            <i class="bi bi-search text-muted"></i>
+                            <input class="form-control border-0 rounded-end-3" type="search" placeholder="Search collection.." aria-label="Search">
+                        </span>
+                    </a>
+                </form>
+            </li> -->
+            <li class="sidebar-item position-relative">
+                <a href="/project/profile.php" class="sidebar-link d-flex text-white align-items-start gap-2">
+                    <i class="bi bi-collection-fill mt-1"></i>
+                    <span class="d-flex flex-column">
+                        <span>All</span>
+                        <span><small class="text-white">0 Recipes</small></span>
+                    </span>
+                </a>
+            </li>
+            <li class="sidebar-item position-relative">
+                <a href="/project/profile.php" class="sidebar-link d-flex text-white align-items-start gap-2">
+                    <i class="bi bi-bookmark-fill mt-1"></i>
+                    <span class="d-flex flex-column">
+                        <span>Saved</span>
+                        <span><small class="text-white">0 Recipes</small></span>
+                    </span>
+                </a>
+            </li>
+            <li class="sidebar-item position-relative">
+                <a href="/project/profile.php" class="sidebar-link d-flex text-white align-items-start gap-2">
+                    <i class="bi bi-pen-fill mt-1"></i>
+                    <span class="d-flex flex-column">
+                        <span>Written</span>
+                        <span><small class="text-white">0 Recipes</small></span>
+                    </span>
+                </a>
+            </li>
+            <li class="sidebar-item position-relative">
+                <a href="/project/profile.php" class="sidebar-link d-flex text-white align-items-start gap-2">
+                    <i class="bi bi-camera2 mt-1"></i>
+                    <span class="d-flex flex-column">
+                        <span>Replate</span>
+                        <span><small class="text-white">0 Recipes</small></span>
+                    </span>
+                </a>
+            </li>
+        <?php endif; ?>
     </ul>
     <?php if (isLoggedIn()): ?>
         <div class="sidebar-footer">

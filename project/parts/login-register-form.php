@@ -7,7 +7,6 @@
                 $search_pages = 
                 [
                     'search-results.php', 
-                    'login.php',
                     'content.php', 
                     'simple-daily-dishes.php',
                     'international-cuisine.php',
@@ -37,7 +36,6 @@
                             </form>
                         </div>
                     </div>
-                    <!-- Hide navigation buttons on mobile (show on sm and up) -->
                     <div class="d-none d-lg-flex justify-content-end align-items-center py-3">
                         <div class="d-flex gap-2">
                             <?php if (!isLoggedIn()): ?>
@@ -54,7 +52,6 @@
                     </div>
                 </div>
                 <?php else: ?>
-                    <!-- Hide navigation buttons on mobile (show on sm and up) -->
                     <div class="d-flex justify-content-end align-items-center py-3">
                         <div class="d-flex gap-2">
                             <?php if (!isLoggedIn()): ?>
