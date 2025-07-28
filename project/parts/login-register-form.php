@@ -37,15 +37,19 @@
                         </div>
                     </div>
                     <div class="d-none d-lg-flex justify-content-end align-items-center py-3">
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 align-items-center">
                             <?php if (!isLoggedIn()): ?>
                                 <a href="login.php">
                                     <button type="button" class="btn btn-outline-dark px-4 py-2 rounded-4 fw-normal">
                                         Log In
                                     </button>
                                 </a>
+                            <?php else: ?>
+                                <a href="profile.php" class="d-flex align-items-center ms-2">
+                                    <img src="/project/images/profile-1.png" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #dee2e6;">
+                                </a>
                             <?php endif; ?>
-                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm">
+                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm ms-2">
                                 <i class="bi bi-plus-lg me-2"></i>Write a Recipe
                             </a>
                         </div>
@@ -53,18 +57,19 @@
                 </div>
                 <?php else: ?>
                     <div class="d-flex justify-content-end align-items-center py-3">
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 align-items-center">
                             <?php if (!isLoggedIn()): ?>
                                 <a href="login.php">
                                     <button type="button" class="btn btn-outline-dark px-4 py-2 rounded-4 fw-normal">
                                         Log In
                                     </button>
                                 </a>
+                            <?php else: ?>
+                                <a href="profile.php" class="d-flex align-items-center ms-2">
+                                    <img src="/project/images/profile-1.png" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #dee2e6;">
+                                </a>
                             <?php endif; ?>
-                            <?php if (isLoggedIn()): ?>
-                                
-                            <?php endif; ?>
-                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm">
+                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm ms-2">
                                 <i class="bi bi-plus-lg me-2"></i>Write a Recipe
                             </a>
                         </div>

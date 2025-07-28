@@ -422,8 +422,8 @@
                             <h2 class="h1 fw-bold mb-4 animate-on-scroll">Ready to Start Cooking?</h2>
                             <p class="lead mb-4 animate-on-scroll">Join our community of passionate home cooks and discover your next favorite recipe</p>
                             <div class="d-flex justify-content-center flex-wrap animate-on-scroll">
-                                <a href="#" class="btn btn-light btn-md px-3">
-                                    <i class="bi bi-search me-2"></i>Browse Recipes
+                                <a href="index.php" class="btn btn-light btn-sm rounded-3 px-3 py-2">
+                                    <i class="bi bi-search me-2"></i>Let's browse recipes!
                                 </a>
                             </div>
                         </div>
