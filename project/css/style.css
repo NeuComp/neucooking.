@@ -456,6 +456,7 @@
         } */
 
         /* Log-in & register form end */
+
         .main.sidebar-expanded {
             pointer-events: none;
         }
@@ -499,19 +500,6 @@
             bottom: -2px; 
             right: -2px;
         }
-
-        /* Category boxes styles */
-
-        /* .category-title {
-            color: var(--primary-color);
-            font-size: 100%;
-        }
-
-        .category-title:hover {
-            text-decoration: underline;
-        } */
-
-        /* Category boxed end */
 
         /* Swiper */
         .swiper-slide {

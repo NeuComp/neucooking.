@@ -270,4 +270,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script> <?php include 'js/script.js'; ?> </script>
 
 </body>
-</html> 
+</html>

@@ -32,705 +32,227 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $site_title ?></title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         :root {
-            --primary-color: #f27c1e;
-            --secondary-color: #f8a86f;
-            --tertiary-color: #f89c4c;
-            --primary-text-color: #fff;
-            --secondary-text-color: #333;
-            --primary-brand-color: #653217;
-            --primary-background-color: #fafbfe;
-            --active-hover-color: rgba(255, 255, 255, .075);
+            --bg-dark: #1a1d29;
+            --sidebar-bg: #2d3142;
+            --card-bg: #2a2d3a;
+            --text-light: #e9ecef;
+            --border-color: #495057;
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
         }
-
-        html, body {
-            height: 100%;
-            margin: 0;
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
         }
-
-        a {
-            text-decoration: none;
-        }
-
-        li {
-            list-style: none;
-        }
-
-        h1 {
-            font-weight: 600;
-            font-size: 1.5rem;
-        }
-
-        p {
-            font-size: 15px;
-        }
-
+        
         .sidebar {
-            background: #f27c1e;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, #363a52 100%);
+            min-height: 100vh;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
         }
-
-        .nav-link {
-            color: rgba(255,255,255,0.8) !important;
-            transition: all 0.3s ease;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: white !important;
-            background: rgba(255,255,255,0.1);
+        
+        .sidebar .nav-link {
+            color: var(--text-light);
             border-radius: 8px;
+            margin: 2px 0;
         }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: var(--primary-color);
         }
-
-        .card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .stat-card.users {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .stat-card.pending {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .stat-card.chefs {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        .badge-user {
-            background: #6c757d;
-        }
-
-        .badge-chef {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .content-area {
-            background: #f8f9fa;
+        
+        .main-content {
+            background-color: var(--bg-dark);
             min-height: 100vh;
         }
-
+        
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        
+        .table-dark {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-outline-light {
+            border-color: var(--border-color);
+        }
+        
+        .form-control, .form-select {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: var(--card-bg);
+            border-color: var(--primary-color);
+            color: var(--text-light);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .badge-user { background-color: var(--info-color); }
+        .badge-chef { background-color: var(--warning-color); }
+        .badge-pending { background-color: var(--warning-color); }
+        .badge-approved { background-color: var(--success-color); }
+        .badge-rejected { background-color: var(--danger-color); }
+        
         .activity-item {
-            border-left: 3px solid #667eea;
-            padding-left: 1rem;
-            margin-bottom: 1rem;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-md-3 col-lg-2 sidebar d-flex flex-column p-3">
-                <div class="text-center mb-4">
-                    <h4 class="text-white"><i class="fas fa-utensils me-2"></i>Admin Dashboard</h4>
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <a href="" class="text-decoration-none"><h4 class="text-light">neucooking.</h4></a>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('pending')">
+                                <i class="bi bi-clock-fill me-2"></i> Pending Recipes
+                                <span class="badge bg-warning ms-2">12</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('recipes')">
+                                <i class="bi bi-journal-bookmark-fill me-2"></i> Recipe Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('roles')">
+                                <i class="bi bi-people-fill me-2"></i> Role Management
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('reports')">
+                                <i class="bi bi-flag-fill me-2"></i> Reports
+                                <span class="badge bg-danger ms-2">5</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('settings')">
+                                <i class="bi bi-gear-fill me-2"></i> Website Settings
+                            </a>
+                        </li>
+                        <hr>
+                        <li class="nav-item">
+                            <div class="dropdown">
+                            <a href="#" class="nav-link dropdown-toggle text-decoration-none" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-fill me-2"></i> Admin
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a href="../profile.php" class="dropdown-item"><i class="bi bi-person-circle me-2"></i> Profile</a></li>
+                                <li><a href="../logout.php" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i> Log Out</a></li>
+                            </ul>
+                        </div>
+                        </li>
+                        
+                    </ul>
                 </div>
-                <ul class="nav nav-pills flex-column flex-grow-1">
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link active" onclick="showSection('dashboard')">
-                            <i class="fas fa-chart-pie me-2"></i>Dashboard Overview
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link" onclick="showSection('pending')">
-                            <i class="fas fa-clock me-2"></i>Pending Recipes
-                            <span class="badge bg-warning text-dark ms-2">3</span>
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link" onclick="showSection('recipes')">
-                            <i class="fas fa-book me-2"></i>Recipe Management
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link" onclick="showSection('roles')">
-                            <i class="fas fa-users me-2"></i>Role Management
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link" onclick="showSection('reports')">
-                            <i class="fas fa-flag me-2"></i>Reports
-                            <span class="badge bg-danger ms-2">2</span>
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="#" class="nav-link" onclick="showSection('settings')">
-                            <i class="fas fa-cogs me-2"></i>Website Settings
-                        </a>
-                    </li>
-                    <li class="nav-item mt-auto">
-                        <a href="../logout.php" class="nav-link text-danger">
-                            <i class="fas fa-sign-out-alt me-2"></i>Log Out
-                        </a>
-                    </li>
-                </ul>
             </nav>
 
-            <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-4 content-area">
-                
-                <!-- Dashboard Overview -->
-                <div id="dashboard" class="content-section">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div id="dashboard-section" class="content-section">
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Dashboard Overview</h1>
-                    </div>
-
-                    <!-- Stats Cards -->
-                    <div class="row mb-4">
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h5 class="card-title">Total Recipes</h5>
-                                            <h2 class="mb-0">156</h2>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-book fa-2x opacity-75"></i>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-light px-3">Refresh</button>
                             </div>
                         </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card pending">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h5 class="card-title">Pending Review</h5>
-                                            <h2 class="mb-0">12</h2>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-clock fa-2x opacity-75"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card users">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h5 class="card-title">Total Users</h5>
-                                            <h2 class="mb-0">2,847</h2>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-users fa-2x opacity-75"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card stat-card chefs">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <h5 class="card-title">Verified Chefs</h5>
-                                            <h2 class="mb-0">43</h2>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-chef-hat fa-2x opacity-75"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activities -->
-                    <div class="row">
-                        <div class="col-lg-8 mb-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activities</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="fas fa-user-check text-success me-2"></i>
-                                                User <strong>Budi Siregar</strong> has been verified as Verified Chef
-                                            </div>
-                                            <small class="text-muted">2 minutes ago</small>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="fas fa-check-circle text-primary me-2"></i>
-                                                Recipe <strong>Ayam Goreng</strong> submitted by Galvin has been approved
-                                            </div>
-                                            <small class="text-muted">2 hours ago</small>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="fas fa-clock text-warning me-2"></i>
-                                                Recipe <strong>Nasi Gudeg</strong> submitted by Sarah is waiting for review
-                                            </div>
-                                            <small class="text-muted">5 hours ago</small>
-                                        </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="fas fa-user-plus text-info me-2"></i>
-                                                New user <strong>Ahmad Rizki</strong> registered
-                                            </div>
-                                            <small class="text-muted">1 day ago</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 mb-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Quick Stats</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Today's Submissions</span>
-                                            <strong>8</strong>
-                                        </div>
-                                        <div class="progress mt-1" style="height: 5px;">
-                                            <div class="progress-bar bg-success" style="width: 70%"></div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Approval Rate</span>
-                                            <strong>85%</strong>
-                                        </div>
-                                        <div class="progress mt-1" style="height: 5px;">
-                                            <div class="progress-bar bg-primary" style="width: 85%"></div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Active Chefs</span>
-                                            <strong>32</strong>
-                                        </div>
-                                        <div class="progress mt-1" style="height: 5px;">
-                                            <div class="progress-bar bg-warning" style="width: 60%"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Recipes -->
-                <div id="pending" class="content-section" style="display: none;">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Pending Recipes</h1>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <h5 class="mb-0">Recipe Review Queue</h5>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Search recipes..." id="pendingSearch">
-                                        <button class="btn btn-outline-secondary" type="button">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Recipe Name</th>
-                                            <th>Cook Time</th>
-                                            <th>Portions</th>
-                                            <th>Author</th>
-                                            <th>Submitted</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="https://via.placeholder.com/40" class="rounded me-2" alt="">
-                                                    <strong>Nasi Gudeg Yogya</strong>
-                                                </div>
-                                            </td>
-                                            <td>2 hours 30 mins</td>
-                                            <td>6 servings</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    Sarah <span class="badge badge-user ms-2">User</span>
-                                                </div>
-                                            </td>
-                                            <td>2024-01-25</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success me-1" onclick="approveRecipe('Nasi Gudeg Yogya')">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#viewRecipeModal">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="rejectRecipe('Nasi Gudeg Yogya')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="https://via.placeholder.com/40" class="rounded me-2" alt="">
-                                                    <strong>Rendang Padang</strong>
-                                                </div>
-                                            </td>
-                                            <td>4 hours</td>
-                                            <td>8 servings</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    Chef Andi <span class="badge badge-chef ms-2">Verified Chef</span>
-                                                </div>
-                                            </td>
-                                            <td>2024-01-24</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success me-1" onclick="approveRecipe('Rendang Padang')">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#viewRecipeModal">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="rejectRecipe('Rendang Padang')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="https://via.placeholder.com/40" class="rounded me-2" alt="">
-                                                    <strong>Soto Betawi</strong>
-                                                </div>
-                                            </td>
-                                            <td>1 hour 45 mins</td>
-                                            <td>4 servings</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    Rini <span class="badge badge-user ms-2">User</span>
-                                                </div>
-                                            </td>
-                                            <td>2024-01-23</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success me-1" onclick="approveRecipe('Soto Betawi')">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#viewRecipeModal">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="rejectRecipe('Soto Betawi')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recipe Management -->
-                <div id="recipes" class="content-section" style="display: none;">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Recipe Management</h1>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <h5 class="mb-0">Approved Recipes</h5>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Search recipes..." id="recipeSearch">
-                                        <button class="btn btn-outline-secondary" type="button">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Recipe Name</th>
-                                            <th>Cook Time</th>
-                                            <th>Portions</th>
-                                            <th>Author</th>
-                                            <th>Approved</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="https://via.placeholder.com/40" class="rounded me-2" alt="">
-                                                    <strong>Ayam Goreng Kremes</strong>
-                                                </div>
-                                            </td>
-                                            <td>45 mins</td>
-                                            <td>4 servings</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    Chef Budi <span class="badge badge-chef ms-2">Verified Chef</span>
-                                                </div>
-                                            </td>
-                                            <td>2024-01-22</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#viewRecipeModal">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteRecipe('Ayam Goreng Kremes')">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <img src="https://via.placeholder.com/40" class="rounded me-2" alt="">
-                                                    <strong>Gado-Gado Jakarta</strong>
-                                                </div>
-                                            </td>
-                                            <td>30 mins</td>
-                                            <td>2 servings</td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    Sari <span class="badge badge-user ms-2">User</span>
-                                                </div>
-                                            </td>
-                                            <td>2024-01-21</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#viewRecipeModal">
-                                                    <i class="fas fa-eye"></i> View
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteRecipe('Gado-Gado Jakarta')">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Role Management -->
-                <div id="roles" class="content-section" style="display: none;">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Role Management</h1>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="row align-items-center">
-                                <div class="col-md-4">
-                                    <h5 class="mb-0">User Management</h5>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select" id="roleFilter">
-                                        <option value="all">All Status</option>
-                                        <option value="user">Users Only</option>
-                                        <option value="chef">Verified Chefs Only</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" placeholder="Search users..." id="userSearch">
-                                        <button class="btn btn-outline-secondary" type="button">
-                                            <i class="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Name & Email</th>
-                                            <th>Role</th>
-                                            <th>Recipes</th>
-                                            <th>Join Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <strong>Budi Siregar</strong>
-                                                    <br><small class="text-muted">budi.siregar@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td><span class="badge badge-chef">Verified Chef</span></td>
-                                            <td>12 recipes</td>
-                                            <td>2023-11-15</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-warning" onclick="removeVerification('Budi Siregar')">
-                                                    <i class="fas fa-user-minus"></i> Remove Verification
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <strong>Sarah Mutia</strong>
-                                                    <br><small class="text-muted">sarah.mutia@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td><span class="badge badge-user">User</span></td>
-                                            <td>5 recipes</td>
-                                            <td>2023-12-20</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success" onclick="verifyUser('Sarah Mutia')">
-                                                    <i class="fas fa-user-check"></i> Verify as Chef
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>
-                                                <div>
-                                                    <strong>Ahmad Rizki</strong>
-                                                    <br><small class="text-muted">ahmad.rizki@email.com</small>
-                                                </div>
-                                            </td>
-                                            <td><span class="badge badge-user">User</span></td>
-                                            <td>2 recipes</td>
-                                            <td>2024-01-10</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-success" onclick="verifyUser('Ahmad Rizki')">
-                                                    <i class="fas fa-user-check"></i> Verify as Chef
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reports -->
-                <div id="reports" class="content-section" style="display: none;">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Reports & Content Moderation</h1>
                     </div>
 
                     <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card border-danger">
-                                <div class="card-header bg-danger text-white">
-                                    <h5 class="mb-0"><i class="fas fa-flag me-2"></i>Recipe Reports</h5>
-                                </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card stat-card text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                 <div class="card-body">
-                                    <div class="border-bottom pb-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <strong>Recipe: "Spicy Noodles"</strong>
-                                                <br><small class="text-muted">Reported by: User123</small>
-                                                <br><span class="badge bg-warning text-dark">Inappropriate Content</span>
-                                            </div>
-                                            <div>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#reviewReportModal">Review</button>
-                                                <button class="btn btn-sm btn-danger">Remove</button>
-                                            </div>
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total Recipes</div>
+                                            <div class="h5 mb-0 font-weight-bold">156</div>
                                         </div>
-                                        <p class="mt-2 mb-0 text-muted">Contains offensive language in description</p>
-                                    </div>
-                                    <div class="border-bottom pb-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <strong>Recipe: "Traditional Soup"</strong>
-                                                <br><small class="text-muted">Reported by: CookLover</small>
-                                                <br><span class="badge bg-danger">Misleading Information</span>
-                                            </div>
-                                            <div>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#reviewReportModal">Review</button>
-                                                <button class="btn btn-sm btn-danger">Remove</button>
-                                            </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-journal-text stats-icon"></i>
                                         </div>
-                                        <p class="mt-2 mb-0 text-muted">Recipe contains dangerous cooking instructions</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card border-warning">
-                                <div class="card-header bg-warning text-dark">
-                                    <h5 class="mb-0"><i class="fas fa-user-times me-2"></i>User Reports</h5>
-                                </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card stat-card text-white" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                                 <div class="card-body">
-                                    <div class="border-bottom pb-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <strong>User: "BadCook99"</strong>
-                                                <br><small class="text-muted">Reported by: ChefMaster</small>
-                                                <br><span class="badge bg-danger">Harassment</span>
-                                            </div>
-                                            <div>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#reviewUserReportModal">Review</button>
-                                                <button class="btn btn-sm btn-warning">Suspend</button>
-                                            </div>
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-uppercase mb-1">Pending Review</div>
+                                            <div class="h5 mb-0 font-weight-bold">12</div>
                                         </div>
-                                        <p class="mt-2 mb-0 text-muted">Posting offensive comments on recipes</p>
+                                        <div class="col-auto">
+                                            <i class="bi bi-clock-history stats-icon"></i>
+                                        </div>
                                     </div>
-                                    <div class="border-bottom pb-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <strong>User: "SpamAccount"</strong>
-                                                <br><small class="text-muted">Reported by: Multiple Users</small>
-                                                <br><span class="badge bg-warning text-dark">Spam</span>
-                                            </div>
-                                            <div>
-                                                <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#reviewUserReportModal">Review</button>
-                                                <button class="btn btn-sm btn-danger">Ban</button>
-                                            </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card stat-card text-white" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total Users</div>
+                                            <div class="h5 mb-0 font-weight-bold">2,847</div>
                                         </div>
-                                        <p class="mt-2 mb-0 text-muted">Posting duplicate recipes and promotional content</p>
+                                        <div class="col-auto">
+                                            <i class="bi bi-people stats-icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card stat-card text-white" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-uppercase mb-1">Verified Chefs</div>
+                                            <div class="h5 mb-0 font-weight-bold">43</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-award stats-icon"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -739,181 +261,789 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
 
                     <div class="row">
                         <div class="col-12">
-                            <div class="card">
+                            <div class="card stat-card text-white">
                                 <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Report Statistics</h5>
+                                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i> Recent Activities</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row text-center">
-                                        <div class="col-md-3">
-                                            <h3 class="text-danger">24</h3>
-                                            <p class="mb-0">Total Reports This Month</p>
+                                    <div class="activity-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <i class="bi bi-person-check-fill text-success me-2"></i>
+                                                <strong>Budi Siregar</strong> has been verified as Verified Chef
+                                            </div>
+                                            <small>2 minutes ago</small>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h3 class="text-warning">8</h3>
-                                            <p class="mb-0">Pending Reviews</p>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                Recipe <strong>Ayam Goreng</strong> submitted by Galvin has been approved
+                                            </div>
+                                            <small>2 hours ago</small>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h3 class="text-success">16</h3>
-                                            <p class="mb-0">Resolved Reports</p>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <i class="bi bi-hourglass-split text-warning me-2"></i>
+                                                Recipe <strong>Nasi Gudeg</strong> submitted by Sarah is waiting for review
+                                            </div>
+                                            <small>5 hours ago</small>
                                         </div>
-                                        <div class="col-md-3">
-                                            <h3 class="text-info">3</h3>
-                                            <p class="mb-0">Users Suspended</p>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <i class="bi bi-person-plus-fill text-info me-2"></i>
+                                                New user <strong>Ahmad Rizki</strong> registered
+                                            </div>
+                                            <small>1 day ago</small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- <div class="col-lg-4">
+                            <div class="card stat-card text-white">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="bi bi-bar-chart-line-fill me-2"></i> Quick Stats</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>Today's Submissions</span>
+                                        <strong>8</strong>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>Approval Rate</span>
+                                        <strong>85%</strong>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar bg-info" style="width: 85%"></div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span>Active Chefs</span>
+                                        <strong>32</strong>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+
+                <!-- Pending Recipes Section -->
+                <div id="pending-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Pending Recipes</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-light">Export</button>
+                                <button type="button" class="btn btn-sm btn-primary">Bulk Actions</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" placeholder="Search recipes..." id="pendingSearch">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Categories</option>
+                                <option>Main Course</option>
+                                <option>Dessert</option>
+                                <option>Appetizer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>Sort by Date</option>
+                                <option>Sort by Name</option>
+                                <option>Sort by Author</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="form-check-input"></th>
+                                        <th>Recipe Name</th>
+                                        <th>Cook Time</th>
+                                        <th>Portions</th>
+                                        <th>Author</th>
+                                        <th>Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Nasi Gudeg Yogyakarta</strong></td>
+                                        <td>2 hours</td>
+                                        <td>4 servings</td>
+                                        <td>Sarah <span class="badge badge-user">User</span></td>
+                                        <td>2025-07-28</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(1)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(1)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Rendang Padang</strong></td>
+                                        <td>3 hours</td>
+                                        <td>6 servings</td>
+                                        <td>Ahmad <span class="badge badge-chef">Verified Chef</span></td>
+                                        <td>2025-07-27</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(2)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(2)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Sate Ayam Madura</strong></td>
+                                        <td>45 minutes</td>
+                                        <td>3 servings</td>
+                                        <td>Budi <span class="badge badge-chef">Verified Chef</span></td>
+                                        <td>2025-07-26</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(3)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(3)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <nav class="mt-3">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <!-- Recipe Management Section -->
+                <div id="recipes-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Recipe Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-light">Export</button>
+                                <button type="button" class="btn btn-sm btn-success">Add Recipe</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" placeholder="Search recipes...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Categories</option>
+                                <option>Main Course</option>
+                                <option>Dessert</option>
+                                <option>Appetizer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Authors</option>
+                                <option>Verified Chefs Only</option>
+                                <option>Regular Users</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select">
+                                <option>Sort by Date</option>
+                                <option>Sort by Name</option>
+                                <option>Sort by Rating</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Recipe Name</th>
+                                        <th>Cook Time</th>
+                                        <th>Portions</th>
+                                        <th>Author</th>
+                                        <th>Approved Date</th>
+                                        <th>Rating</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Ayam Goreng Kremes</strong></td>
+                                        <td>1 hour</td>
+                                        <td>4 servings</td>
+                                        <td>Galvin <span class="badge badge-chef">Verified Chef</span></td>
+                                        <td>2025-07-25</td>
+                                        <td>
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                                4.5
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteRecipe(1)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Gado-Gado Jakarta</strong></td>
+                                        <td>30 minutes</td>
+                                        <td>2 servings</td>
+                                        <td>Sari <span class="badge badge-user">User</span></td>
+                                        <td>2025-07-24</td>
+                                        <td>
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                4.0
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning me-1">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteRecipe(2)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Website Settings -->
-                <div id="settings" class="content-section" style="display: none;">
+                <!-- Role Management Section -->
+                <div id="roles-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Role Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-light">Export Users</button>
+                                <button type="button" class="btn btn-sm btn-success">Bulk Verify</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" placeholder="Search by name or email...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Status</option>
+                                <option>Users Only</option>
+                                <option>Verified Chefs Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>Sort by Join Date</option>
+                                <option>Sort by Name</option>
+                                <option>Sort by Recipes Count</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-light w-100">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="form-check-input"></th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Recipes</th>
+                                        <th>Join Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Budi Siregar</strong></td>
+                                        <td>budi.siregar@email.com</td>
+                                        <td><span class="badge badge-chef">Verified Chef</span></td>
+                                        <td>15</td>
+                                        <td>2024-01-15</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning me-1" onclick="removeVerification(1)">
+                                                <i class="fas fa-user-minus"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Sarah Wijaya</strong></td>
+                                        <td>sarah.wijaya@email.com</td>
+                                        <td><span class="badge badge-user">User</span></td>
+                                        <td>3</td>
+                                        <td>2024-03-22</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="verifyUser(2)">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input"></td>
+                                        <td><strong>Ahmad Rizki</strong></td>
+                                        <td>ahmad.rizki@email.com</td>
+                                        <td><span class="badge badge-user">User</span></td>
+                                        <td>1</td>
+                                        <td>2025-07-27</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="verifyUser(3)">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div id="reports-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Reports Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-light">Export Reports</button>
+                                <button type="button" class="btn btn-sm btn-danger">Bulk Actions</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card stat-card text-center">
+                                <div class="card-body">
+                                    <h3 class="text-danger">12</h3>
+                                    <p class="mb-0">Recipe Reports</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card text-center">
+                                <div class="card-body">
+                                    <h3 class="text-warning">8</h3>
+                                    <p class="mb-0">User Reports</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card text-center">
+                                <div class="card-body">
+                                    <h3 class="text-info">5</h3>
+                                    <p class="mb-0">Spam Reports</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card stat-card text-center">
+                                <div class="card-body">
+                                    <h3 class="text-success">3</h3>
+                                    <p class="mb-0">Resolved Today</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" placeholder="Search reports...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Report Types</option>
+                                <option>Recipe Reports</option>
+                                <option>User Reports</option>
+                                <option>Spam Reports</option>
+                                <option>Violence Content</option>
+                                <option>Copyright Issues</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select">
+                                <option>All Status</option>
+                                <option>Pending</option>
+                                <option>Under Review</option>
+                                <option>Resolved</option>
+                                <option>Dismissed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select">
+                                <option>Latest First</option>
+                                <option>Oldest First</option>
+                                <option>Priority</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Report ID</th>
+                                        <th>Type</th>
+                                        <th>Target</th>
+                                        <th>Reporter</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#RPT001</td>
+                                        <td><span class="badge bg-danger">Recipe</span></td>
+                                        <td>Spicy Noodles Recipe</td>
+                                        <td>user123@email.com</td>
+                                        <td>Inappropriate content</td>
+                                        <td><span class="badge badge-pending">Pending</span></td>
+                                        <td>2025-07-28</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewReport(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="resolveReport(1)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" onclick="dismissReport(1)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>#RPT002</td>
+                                        <td><span class="badge bg-warning">User</span></td>
+                                        <td>chef_violator</td>
+                                        <td>reporter@email.com</td>
+                                        <td>Spam behavior</td>
+                                        <td><span class="badge bg-info">Under Review</span></td>
+                                        <td>2025-07-27</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewReport(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-success me-1" onclick="resolveReport(2)">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" onclick="dismissReport(2)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>#RPT003</td>
+                                        <td><span class="badge bg-danger">Recipe</span></td>
+                                        <td>Dangerous Cooking Method</td>
+                                        <td>safety@email.com</td>
+                                        <td>Safety concerns</td>
+                                        <td><span class="badge badge-approved">Resolved</span></td>
+                                        <td>2025-07-26</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewReport(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-secondary" disabled>
+                                                <i class="fas fa-archive"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Website Settings Section -->
+                <div id="settings-section" class="content-section" style="display: none;">
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Website Settings</h1>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-lg-6 mb-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-globe me-2"></i>General Settings</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form>
-                                        <div class="mb-3">
-                                            <label for="siteTitle" class="form-label">Website Title</label>
-                                            <input type="text" class="form-control" id="siteTitle" value="Recipe Master - Indonesian Cuisine">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="siteTagline" class="form-label">Tagline</label>
-                                            <input type="text" class="form-control" id="siteTagline" value="Discover Authentic Indonesian Recipes">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="footerText" class="form-label">Footer Text</label>
-                                            <textarea class="form-control" id="footerText" rows="3">© 2024 Recipe Master. All rights reserved. Preserving Indonesian culinary traditions.</textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="contactEmail" class="form-label">Contact Email</label>
-                                            <input type="email" class="form-control" id="contactEmail" value="admin@recipemaster.com">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-6 mb-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>System Settings</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="maintenanceMode">
-                                            <label class="form-check-label" for="maintenanceMode">
-                                                Maintenance Mode
-                                            </label>
-                                        </div>
-                                        <small class="text-muted">Enable to show maintenance page to visitors</small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="userRegistration" checked>
-                                            <label class="form-check-label" for="userRegistration">
-                                                User Registration
-                                            </label>
-                                        </div>
-                                        <small class="text-muted">Allow new users to register</small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="recipeSubmission" checked>
-                                            <label class="form-check-label" for="recipeSubmission">
-                                                Recipe Submission
-                                            </label>
-                                        </div>
-                                        <small class="text-muted">Allow users to submit recipes</small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="maxFileSize" class="form-label">Max Upload Size (MB)</label>
-                                        <input type="number" class="form-control" id="maxFileSize" value="5">
-                                    </div>
-                                    <button type="submit" class="btn btn-success">Update Settings</button>
-                                </div>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-success" onclick="saveSettings()">Save All Changes</button>
+                                <button type="button" class="btn btn-sm btn-outline-light">Reset to Default</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-lg-6 mb-4">
-                            <div class="card">
+                        <!-- General Settings -->
+                        <div class="col-lg-6">
+                            <div class="card stat-card mb-4">
                                 <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Settings</h5>
+                                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i> General Settings</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
-                                        <input type="number" class="form-control" id="sessionTimeout" value="30">
+                                        <label class="form-label">Website Title</label>
+                                        <input type="text" class="form-control" value="Recipe Master - Indonesian Cuisine">
                                     </div>
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="twoFactorAuth">
-                                            <label class="form-check-label" for="twoFactorAuth">
-                                                Require 2FA for Admins
-                                            </label>
-                                        </div>
+                                        <label class="form-label">Website Description</label>
+                                        <textarea class="form-control" rows="3">Discover and share authentic Indonesian recipes with our community of passionate cooks and verified chefs.</textarea>
                                     </div>
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="loginAttempts" checked>
-                                            <label class="form-check-label" for="loginAttempts">
-                                                Limit Login Attempts
-                                            </label>
-                                        </div>
+                                        <label class="form-label">Contact Email</label>
+                                        <input type="email" class="form-control" value="admin@recipemaster.com">
                                     </div>
-                                    <button type="submit" class="btn btn-warning">Save Security Settings</button>
+                                    <div class="mb-3">
+                                        <label class="form-label">Footer Text</label>
+                                        <input type="text" class="form-control" value="© 2025 Recipe Master. All rights reserved.">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Time Zone</label>
+                                        <select class="form-select">
+                                            <option>Asia/Jakarta (GMT+7)</option>
+                                            <option>Asia/Makassar (GMT+8)</option>
+                                            <option>Asia/Jayapura (GMT+9)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature Settings -->
+                            <div class="card stat-card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-toggle-on me-2"></i> Feature Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="userRegistration" checked>
+                                        <label class="form-check-label" for="userRegistration">
+                                            Allow User Registration
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="recipeSubmission" checked>
+                                        <label class="form-check-label" for="recipeSubmission">
+                                            Allow Recipe Submissions
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="comments" checked>
+                                        <label class="form-check-label" for="comments">
+                                            Enable Comments
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="ratings" checked>
+                                        <label class="form-check-label" for="ratings">
+                                            Enable Recipe Ratings
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="newsletter">
+                                        <label class="form-check-label" for="newsletter">
+                                            Newsletter Subscription
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="col-lg-6 mb-4">
-                            <div class="card">
+
+                        <!-- Security & Maintenance -->
+                        <div class="col-lg-6">
+                            <div class="card stat-card mb-4">
                                 <div class="card-header">
-                                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+                                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i> Security Settings</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
-                                            <label class="form-check-label" for="emailNotifications">
-                                                Email Notifications
-                                            </label>
-                                        </div>
+                                        <label class="form-label">Max Recipe Submissions per Day</label>
+                                        <input type="number" class="form-control" value="5">
                                     </div>
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="newRecipeAlerts" checked>
-                                            <label class="form-check-label" for="newRecipeAlerts">
-                                                New Recipe Alerts
-                                            </label>
-                                        </div>
+                                        <label class="form-label">Auto-approve recipes from Verified Chefs</label>
+                                        <select class="form-select">
+                                            <option>Disabled</option>
+                                            <option selected>Enabled</option>
+                                        </select>
                                     </div>
                                     <div class="mb-3">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="reportAlerts" checked>
-                                            <label class="form-check-label" for="reportAlerts">
-                                                Report Alerts
-                                            </label>
-                                        </div>
+                                        <label class="form-label">Content Moderation Level</label>
+                                        <select class="form-select">
+                                            <option>Low</option>
+                                            <option selected>Medium</option>
+                                            <option>High</option>
+                                            <option>Strict</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                        <label class="form-check-label" for="twoFactorAuth">
+                                            Require 2FA for Admin Accounts
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="loginAttempts" checked>
+                                        <label class="form-check-label" for="loginAttempts">
+                                            Limit Login Attempts
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Maintenance Mode -->
+                            <div class="card stat-card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i> Maintenance Mode</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                                        <label class="form-check-label" for="maintenanceMode">
+                                            Enable Maintenance Mode
+                                        </label>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="adminEmail" class="form-label">Admin Email</label>
-                                        <input type="email" class="form-control" id="adminEmail" value="admin@recipemaster.com">
+                                        <label class="form-label">Maintenance Message</label>
+                                        <textarea class="form-control" rows="3">We're currently performing scheduled maintenance. We'll be back shortly!</textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-info">Save Notification Settings</button>
+                                    <div class="mb-3">
+                                        <label class="form-label">Estimated Completion Time</label>
+                                        <input type="datetime-local" class="form-control">
+                                    </div>
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Enabling maintenance mode will make the website inaccessible to regular users.
+                                    </div>
+                                    <button class="btn btn-warning btn-sm" onclick="toggleMaintenance()">
+                                        <i class="fas fa-power-off me-1"></i> Toggle Maintenance
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- System Information -->
+                            <div class="card stat-card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> System Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-6">System Version:</div>
+                                        <div class="col-6"><strong>v2.1.3</strong></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">Database Size:</div>
+                                        <div class="col-6"><strong>245 MB</strong></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">Media Storage:</div>
+                                        <div class="col-6"><strong>1.2 GB</strong></div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">Last Backup:</div>
+                                        <div class="col-6"><strong>2025-07-28 02:00</strong></div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-6">Server Status:</div>
+                                        <div class="col-6">
+                                            <span class="badge bg-success">Online</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-info btn-sm me-2">
+                                        <i class="fas fa-download me-1"></i> Backup Now
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-sync me-1"></i> Clear Cache
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -924,37 +1054,38 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
     </div>
 
     <!-- Recipe View Modal -->
-    <div class="modal fade" id="viewRecipeModal" tabindex="-1">
+    <div class="modal fade" id="recipeModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Recipe Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-4">
-                            <img src="https://via.placeholder.com/300x200" class="img-fluid rounded" alt="Recipe Image">
+                        <div class="col-md-6">
+                            <img src="https://via.placeholder.com/300x200/2a2d3a/ffffff?text=Recipe+Image" class="img-fluid rounded mb-3" alt="Recipe">
                         </div>
-                        <div class="col-md-8">
-                            <h4>Nasi Gudeg Yogya</h4>
-                            <p><strong>Author:</strong> Sarah <span class="badge badge-user">User</span></p>
-                            <p><strong>Cook Time:</strong> 2 hours 30 minutes</p>
-                            <p><strong>Servings:</strong> 6 people</p>
-                            <p><strong>Difficulty:</strong> Intermediate</p>
+                        <div class="col-md-6">
+                            <h4 id="recipe-title">Nasi Gudeg Yogyakarta</h4>
+                            <p><strong>Author:</strong> <span id="recipe-author">Sarah</span></p>
+                            <p><strong>Cook Time:</strong> <span id="recipe-time">2 hours</span></p>
+                            <p><strong>Servings:</strong> <span id="recipe-servings">4 servings</span></p>
+                            <p><strong>Category:</strong> <span id="recipe-category">Main Course</span></p>
+                            <p><strong>Difficulty:</strong> <span id="recipe-difficulty">Medium</span></p>
                         </div>
                     </div>
                     <hr>
-                    <h6>Ingredients:</h6>
-                    <ul>
+                    <h5>Ingredients:</h5>
+                    <ul id="recipe-ingredients">
                         <li>500g young jackfruit</li>
                         <li>200ml coconut milk</li>
                         <li>2 bay leaves</li>
-                        <li>Palm sugar to taste</li>
-                        <li>Salt to taste</li>
+                        <li>1 tsp salt</li>
+                        <li>2 tbsp palm sugar</li>
                     </ul>
-                    <h6>Instructions:</h6>
-                    <ol>
+                    <h5>Instructions:</h5>
+                    <ol id="recipe-instructions">
                         <li>Clean and cut the young jackfruit into pieces</li>
                         <li>Boil with coconut milk and spices</li>
                         <li>Simmer for 2 hours until tender</li>
@@ -962,170 +1093,163 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     </ol>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="approveRecipe()">
+                        <i class="fas fa-check me-1"></i> Approve
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="rejectRecipe()">
+                        <i class="fas fa-times me-1"></i> Reject
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Report Review Modal -->
-    <div class="modal fade" id="reviewReportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Review Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>Reported Content: "Spicy Noodles"</h6>
-                    <p><strong>Report Type:</strong> Inappropriate Content</p>
-                    <p><strong>Reporter:</strong> User123</p>
-                    <p><strong>Report Details:</strong></p>
-                    <p class="border p-3 bg-light">Contains offensive language in description and inappropriate images that don't match the recipe content.</p>
-                    <div class="mt-3">
-                        <label for="adminNotes" class="form-label">Admin Notes:</label>
-                        <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add your review notes..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success">Dismiss Report</button>
-                    <button type="button" class="btn btn-warning">Issue Warning</button>
-                    <button type="button" class="btn btn-danger">Remove Content</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- User Report Review Modal -->
-    <div class="modal fade" id="reviewUserReportModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Review User Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <h6>Reported User: "BadCook99"</h6>
-                    <p><strong>Report Type:</strong> Harassment</p>
-                    <p><strong>Reporter:</strong> ChefMaster</p>
-                    <div class="border p-3 bg-light mb-3">
-                        <strong>Evidence:</strong>
-                        <p class="mb-2">"This user has been leaving offensive comments on multiple recipes, using inappropriate language and harassing other users in the comment sections."</p>
-                        <small class="text-muted">Reported with screenshots attached</small>
-                    </div>
-                    <div class="mt-3">
-                        <label for="userAdminNotes" class="form-label">Admin Notes:</label>
-                        <textarea class="form-control" id="userAdminNotes" rows="3" placeholder="Add your review notes..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success">Dismiss Report</button>
-                    <button type="button" class="btn btn-warning">Issue Warning</button>
-                    <button type="button" class="btn btn-orange" style="background-color: #fd7e14; border-color: #fd7e14; color: white;">Suspend User</button>
-                    <button type="button" class="btn btn-danger">Ban User</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Navigation functionality
-        function showSection(sectionId) {
+        // Global variables
+        let currentSection = 'dashboard';
+
+        // Navigation functions
+        function showSection(sectionName) {
             // Hide all sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.style.display = 'none';
             });
             
             // Show selected section
-            document.getElementById(sectionId).style.display = 'block';
+            document.getElementById(sectionName + '-section').style.display = 'block';
             
             // Update navigation
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('active');
             });
             event.target.classList.add('active');
+            
+            currentSection = sectionName;
         }
 
         // Recipe management functions
-        function approveRecipe(recipeName) {
-            if (confirm(`Are you sure you want to approve "${recipeName}"?`)) {
-                alert(`Recipe "${recipeName}" has been approved successfully!`);
-                // In real app, this would make an API call
+        function viewRecipe(id) {
+            const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
+            modal.show();
+        }
+
+        function approveRecipe(id) {
+            if (confirm('Are you sure you want to approve this recipe?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Recipe approved successfully!');
+                    // Remove from pending list or update status
+                }, 500);
             }
         }
 
-        function rejectRecipe(recipeName) {
-            if (confirm(`Are you sure you want to reject "${recipeName}"?`)) {
-                alert(`Recipe "${recipeName}" has been rejected.`);
-                // In real app, this would make an API call
+        function rejectRecipe(id) {
+            const reason = prompt('Please provide a reason for rejection:');
+            if (reason) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Recipe rejected successfully!');
+                    // Remove from pending list or update status
+                }, 500);
             }
         }
 
-        function deleteRecipe(recipeName) {
-            if (confirm(`Are you sure you want to delete "${recipeName}"? This action cannot be undone.`)) {
-                alert(`Recipe "${recipeName}" has been deleted.`);
-                // In real app, this would make an API call
+        function deleteRecipe(id) {
+            if (confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Recipe deleted successfully!');
+                    // Remove from list
+                }, 500);
             }
         }
 
         // User management functions
-        function verifyUser(userName) {
-            if (confirm(`Are you sure you want to verify "${userName}" as a Verified Chef?`)) {
-                alert(`User "${userName}" has been verified as a Verified Chef!`);
-                // In real app, this would make an API call
+        function verifyUser(id) {
+            if (confirm('Are you sure you want to verify this user as a chef?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('User verified successfully!');
+                    // Update user status
+                }, 500);
             }
         }
 
-        function removeVerification(userName) {
-            if (confirm(`Are you sure you want to remove verification from "${userName}"?`)) {
-                alert(`Verification removed from "${userName}".`);
-                // In real app, this would make an API call
+        function removeVerification(id) {
+            if (confirm('Are you sure you want to remove chef verification from this user?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Verification removed successfully!');
+                    // Update user status
+                }, 500);
+            }
+        }
+
+        // Report management functions
+        function viewReport(id) {
+            alert('Viewing report details for report #' + id);
+            // Implement report detail view
+        }
+
+        function resolveReport(id) {
+            if (confirm('Mark this report as resolved?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Report resolved successfully!');
+                    // Update report status
+                }, 500);
+            }
+        }
+
+        function dismissReport(id) {
+            if (confirm('Dismiss this report?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Report dismissed successfully!');
+                    // Update report status
+                }, 500);
+            }
+        }
+
+        // Settings functions
+        function saveSettings() {
+            // Simulate saving settings
+            setTimeout(() => {
+                alert('Settings saved successfully!');
+            }, 500);
+        }
+
+        function toggleMaintenance() {
+            const isEnabled = document.getElementById('maintenanceMode').checked;
+            if (confirm(isEnabled ? 'Enable maintenance mode?' : 'Disable maintenance mode?')) {
+                // Simulate API call
+                setTimeout(() => {
+                    alert('Maintenance mode ' + (isEnabled ? 'enabled' : 'disabled') + ' successfully!');
+                }, 500);
             }
         }
 
         // Search functionality
         document.getElementById('pendingSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            // In real app, this would filter the table rows
-            console.log('Searching pending recipes for:', searchTerm);
+            // Implement search functionality
+            console.log('Searching for:', searchTerm);
         });
 
-        document.getElementById('recipeSearch')?.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            // In real app, this would filter the table rows
-            console.log('Searching recipes for:', searchTerm);
-        });
-
-        document.getElementById('userSearch')?.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            // In real app, this would filter the table rows
-            console.log('Searching users for:', searchTerm);
-        });
-
-        // Role filter functionality
-        document.getElementById('roleFilter')?.addEventListener('change', function(e) {
-            const filterValue = e.target.value;
-            // In real app, this would filter the user table
-            console.log('Filtering users by:', filterValue);
-        });
-
-        // Form submissions
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Settings saved successfully!');
-            });
-        });
-
-        // Initialize tooltips and other Bootstrap components
+        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize any Bootstrap tooltips if needed
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
+
+        // Simulate real-time updates
+        setInterval(function() {
+            // Update timestamps, counts, etc.
+            // This would normally come from WebSocket or periodic API calls
+        }, 30000);
     </script>
 </body>
 </html>
