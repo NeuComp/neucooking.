@@ -1,6 +1,6 @@
 <?php
-require 'config.php';
-require 'data.php';
+require_once 'config.php';
+
 session_start();
 
 $domain = 'https://galvin.my.id/project/';

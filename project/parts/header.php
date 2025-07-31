@@ -1,6 +1,5 @@
 <?php
 require 'admin/config.php';
-require 'admin/data.php';
 session_start();
 
 $site_title = 'Neu Cooking';

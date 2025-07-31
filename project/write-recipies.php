@@ -1,6 +1,6 @@
 <?php
-require 'admin/config.php';
-require 'admin/data.php';
+require_once 'admin/config.php';
+
 session_start();
 
 $site_title = 'Neu Cooking';
@@ -14,6 +14,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     </script>";
     exit();
 }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -81,19 +82,19 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
                                         </div>
                                         <div class="mb-4">
                                             <label for="recipeCategory" class="form-label fw-semibold">Recipe Category</label>
-                                            <div class="dropdown" id="recipeCategoryDropdown">
-                                                <button class="btn recipe-input dropdown-toggle text-start d-flex justify-content-between align-items-center py-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="categoryDropdownButton">
+                                            <div class="dropdown w-100" id="recipeCategoryDropdown">
+                                                <button class="recipe-input dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center rounded-3 py-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="categoryDropdownButton">
                                                     <div class="d-flex flex-wrap gap-1" id="selectedTagsContainer">
-                                                        <span class="text-muted">Select categories for your recipe...</span>
+                                                        <span class="text-muted">Select categories..</span>
                                                     </div>
                                                 </button>
-                                                <div class="dropdown-menu p-0 multiselect-dropdown" id="categoryDropdownMenu">
+                                                <div class="dropdown-menu w-100 p-0 multiselect-dropdown" id="categoryDropdownMenu">
                                                     <div class="p-3 border-bottom">
                                                         <div class="input-group">
                                                             <span class="input-group-text">
                                                                 <i class="bi bi-search"></i>
                                                             </span>
-                                                            <input type="text" class="form-control" placeholder="Search categories..." id="categorySearch" onkeyup="filterCategories(this.value)">
+                                                            <input type="text" class="form-control" placeholder="Search categories.." id="categorySearch" onkeyup="filterCategories(this.value)">
                                                         </div>
                                                     </div>
                                                     <div class="py-2" id="categoryOptionsList">
@@ -228,7 +229,7 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 
                                 <div class="col-12 form-actions d-flex">
                                     <div class="col-6 d-flex justify-content-start">
-                                        <button type="button" class="btn btn-outline-secondary btn-write-action px-3">
+                                        <button type="button" class="btn btn-outline-secondary btn-write-action px-3" disabled>
                                             <i class="bi bi-save me-2"></i>Save Draft
                                         </button>
                                     </div>
@@ -255,33 +256,44 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
 
 <script>
     const categories = [
-        { value: 'appetizer', label: 'Appetizer', icon: 'bi-cup-hot' },
-        { value: 'main-course', label: 'Main Course', icon: 'bi-bowl-hot' },
-        { value: 'dessert', label: 'Dessert', icon: 'bi-cake2' },
-        { value: 'breakfast', label: 'Breakfast', icon: 'bi-egg-fried' },
-        { value: 'lunch', label: 'Lunch', icon: 'bi-sun' },
-        { value: 'dinner', label: 'Dinner', icon: 'bi-moon-stars' },
-        { value: 'snack', label: 'Snack', icon: 'bi-cookie' },
-        { value: 'beverage', label: 'Beverage', icon: 'bi-cup-straw' },
-        { value: 'soup', label: 'Soup', icon: 'bi-bowl-hot' },
-        { value: 'salad', label: 'Salad', icon: 'bi-flower1' },
-        { value: 'vegetarian', label: 'Vegetarian', icon: 'bi-tree' },
-        { value: 'vegan', label: 'Vegan', icon: 'bi-heart-pulse' },
-        { value: 'gluten-free', label: 'Gluten Free', icon: 'bi-shield-check' },
-        { value: 'dairy-free', label: 'Dairy Free', icon: 'bi-droplet-half' },
-        { value: 'low-carb', label: 'Low Carb', icon: 'bi-graph-down' },
-        { value: 'keto', label: 'Keto', icon: 'bi-lightning' },
-        { value: 'healthy', label: 'Healthy', icon: 'bi-heart' },
-        { value: 'comfort-food', label: 'Comfort Food', icon: 'bi-house-heart' },
-        { value: 'quick-easy', label: 'Quick & Easy', icon: 'bi-clock' },
-        { value: 'one-pot', label: 'One Pot', icon: 'bi-pot' },
-        { value: 'grilled', label: 'Grilled', icon: 'bi-fire' },
-        { value: 'baked', label: 'Baked', icon: 'bi-thermometer-sun' },
-        { value: 'fried', label: 'Fried', icon: 'bi-circle' },
-        { value: 'no-cook', label: 'No Cook', icon: 'bi-snow' },
-        { value: 'spicy', label: 'Spicy', icon: 'bi-fire' },
-        { value: 'sweet', label: 'Sweet', icon: 'bi-heart' },
-        { value: 'savory', label: 'Savory', icon: 'bi-spoon' }
+        { value: 'simple-daily-dishes', label: 'Simple Daily Dishes', icon: 'bi-journal-text' },
+        { value: 'breakfast', label: 'Breakfast', icon: 'bi-cup-hot' },
+        { value: 'lunch', label: 'Lunch', icon: 'bi-bag' },
+        { value: 'dinner', label: 'Dinner', icon: 'bi-moon' },
+        { value: 'snacks', label: 'Snacks', icon: 'bi-cookie' },
+        { value: 'desserts', label: 'Desserts', icon: 'bi-cake' },
+        { value: 'beverages', label: 'Beverage', icon: 'bi-cup-straw' },
+
+        { value: 'international-cuisine', label: 'International Cuisine', icon: 'bi-globe' },
+        { value: 'indonesian', label: 'Indonesian', icon: 'bi-flag' },
+        { value: 'chinese', label: 'Chinese', icon: 'bi-flag' },
+        { value: 'japanese', label: 'Japanese', icon: 'bi-flag' },
+        { value: 'korean', label: 'Korean', icon: 'bi-flag' },
+        { value: 'western', label: 'Western', icon: 'bi-flag' },
+        { value: 'middle-eastern', label: 'Middle Eastern', icon: 'bi-flag' },
+
+        { value: 'diet-lifestyle', label: 'Diet Lifestyle', icon: 'bi-activity' },
+        { value: 'vegan', label: 'Vegan', icon: 'bi-emoji-laughing-fill' },
+        { value: 'gluten-free', label: 'Gluten Free', icon: 'bi-x-circle' },
+        { value: 'dairy-free', label: 'Dairy Free', icon: 'bi-droplet-fill' },
+        { value: 'low-carb', label: 'Low Carb', icon: 'bi-bar-chart-fill' },
+        { value: 'high-protein', label: 'High Protein', icon: 'bi-arrow-up-circle' },
+        { value: 'diabetic-friendly', label: 'Diabetic Friendly', icon: 'bi-heart-pulse' },
+
+        { value: 'by-ingredient', label: 'By Ingredient', icon: 'bi-basket' },
+        { value: 'red-meat', label: 'Red Meat', icon: 'bi-grid-fill' },
+        { value: 'poultry-and-eggs', label: 'Poultry & Eggs', icon: 'bi-egg' },
+        { value: 'seafood', label: 'Seafood', icon: 'bi-water' },
+        { value: 'vegetables-and-fruit', label: 'Vegetables & Fruit', icon: 'bi-apple' },
+        { value: 'noodles-and-pasta', label: 'Noodles & Pasta', icon: 'bi-chevron-double-down' },
+        { value: 'rice-and-dough', label: 'Rice & Dough', icon: 'bi-circle-fill' },
+
+        { value: 'cooking-technique', label: 'Cooking Technique', icon: 'bi-tools' },
+        { value: 'stovetop', label: 'Stovetop', icon: 'bi-fire' },
+        { value: 'baking', label: 'Baking', icon: 'bi-window' },
+        { value: 'grilling', label: 'Grilling', icon: 'bi-bricks' },
+        { value: 'roasting', label: 'Roasting', icon: 'bi-thermometer-half' },
+        { value: 'air-frying', label: 'Air Frying', icon: 'bi-wind' }
     ];
 
     let selectedCategories = [];
@@ -341,14 +353,14 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
         const displayContainer = document.getElementById('selectedCategoriesDisplay');
         
         if (selectedCategories.length === 0) {
-            tagsContainer.innerHTML = '<span class="text-muted">Select categories for your recipe...</span>';
+            tagsContainer.innerHTML = '<span class="text-muted">Select categories..</span>';
             displayContainer.innerHTML = '<span class="text-secondary fst-italic">None selected</span>';
         } else {
             // Update tags in dropdown button
             const tags = selectedCategories.map(value => {
                 const category = categories.find(cat => cat.value === value);
                 return `
-                    <span class="badge bg-warning text-dark me-1 mb-1 d-inline-flex align-items-center">
+                    <span class="badge bg-warning text-white me-1 mb-1 d-inline-flex align-items-center">
                         <i class="bi ${category.icon} me-1"></i>
                         ${category.label}
                         <button type="button" class="btn-close btn-close-dark ms-2 tag-remove" aria-label="Remove ${category.label}" style="font-size: 0.6em;" onclick="removeCategory('${value}', event)"></button>

@@ -1,11 +1,21 @@
 <?php
-$host = "localhost";
-$user = "arinnapr_ugalvin";
-$pass = "mNFOR9vQdQc}";
-$db   = "arinnapr_dbgalvin";
+class Database {
+    private $host = 'localhost';
+    private $db_name = 'arinnapr_dbgalvin';
+    private $username = 'arinnapr_ugalvin';
+    private $password = 'mNFOR9vQdQc}';
+    public $conn;
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    public function getConnection() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+            $this->conn->exec("set names utf8");
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch(PDOException $exception) {
+            echo "Connection error: " . $exception->getMessage();
+        }
+        return $this->conn;
+    }
 }
 ?>

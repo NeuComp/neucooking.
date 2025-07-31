@@ -1,6 +1,6 @@
 <?php
-require 'admin/config.php';
-require 'admin/data.php';
+require_once 'admin/config.php';
+
 session_start();
 
 $domain = 'https://galvin.my.id/project/';
@@ -11,6 +11,9 @@ $baseUrlAdmin = $baseUrl.'admin/';
 $baseUrlThumbnail = $baseUrl.'images/';
 $adminUrl = $baseUrlAdmin.'dashboard.php';
 $site_title = 'Neu Cooking';
+
+$database = new Database();
+$db = $database->getConnection();
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     echo "<script type='text/javascript'>
@@ -24,16 +27,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['logIn'])) {
         $email = $_POST['login_email'];
         $password = $_POST['login_password'];
-        $sql = "SELECT * FROM db_users WHERE email = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "s", $email);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $row = mysqli_fetch_assoc($result);
 
-        if($row && $password === $row['password']) {
+        $sql = "SELECT * FROM db_users WHERE email = :email";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if($row["role"] == "admin") {
+        if ($row && password_verify($password, $row['password'])) {
+            if ($row["role"] == "admin") {
                 $_SESSION['logged_in'] = true;
                 $_SESSION['id'] = $row['id'];
                 $_SESSION['role'] = $row['role'];
@@ -41,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['first_name'] = $row['first_name'];
                 $_SESSION['last_name'] = $row['last_name'];
                 $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
-                $_SESSION['user_photo'] = $row['user_photo'];
-                $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+                // $_SESSION['user_photo'] = $row['user_photo'];
+                // $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
                 echo "<script type='text/javascript'>
                     window.location.href = '$adminUrl';
                 </script>";
@@ -55,8 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['first_name'] = $row['first_name'];
                 $_SESSION['last_name'] = $row['last_name'];
                 $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
-                $_SESSION['user_photo'] = $row['user_photo'];
-                $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
+                // $_SESSION['user_photo'] = $row['user_photo'];
+                // $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
                 echo "<script type='text/javascript'>
                     window.location.href = '$homeUrl';
                 </script>";
@@ -65,27 +67,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $login_error = "Invalid email or password. Please try again.";
         }
-        mysqli_stmt_close($stmt);
-    }
-
-    elseif (isset($_POST['signUp'])) {
+    } elseif (isset($_POST['signUp'])) {
         $role = 'user';
-        $first_name = mysqli_real_escape_string($conn, $_POST['first_name']);
-        $last_name = mysqli_real_escape_string($conn, $_POST['last_name']);
-        $email = mysqli_real_escape_string($conn, $_POST['signup_email']);
+        $first_name = $_POST['first_name'];
+        $last_name = $_POST['last_name'];
+        $email = $_POST['signup_email'];
         $password = $_POST['signup_password'];
-        $check_sql = "SELECT * FROM db_users WHERE email = '".$email."'";
-        $check_result = mysqli_query($conn, $check_sql);
 
-        if (mysqli_num_rows($check_result) > 0) {
+        $check_sql = "SELECT COUNT(*) FROM db_users WHERE email = :email";
+        $check_stmt = $db->prepare($check_sql);
+        $check_stmt->bindParam(':email', $email);
+        $check_stmt->execute();
+        $email_exists = $check_stmt->fetchColumn();
+
+        if ($email_exists > 0) {
             $signup_error = "Email already exists. Please use a different email.";
         } else {
-            // $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('".$role."', '".$first_name."', '".$last_name."', '".$email."', '".$password."')";
-            $insert_result = mysqli_query($conn, $insert_sql);
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES (:role, :first_name, :last_name, :email, :password)";
+            $insert_stmt = $db->prepare($insert_sql);
+
+            $insert_stmt->bindParam(':role', $role);
+            $insert_stmt->bindParam(':first_name', $first_name);
+            $insert_stmt->bindParam(':last_name', $last_name);
+            $insert_stmt->bindParam(':email', $email);
+            $insert_stmt->bindParam(':password', $hashed_password);
+
+            $insert_result = $insert_stmt->execute();
 
             if ($insert_result) {
-                $new_id = mysqli_insert_id($conn);
+                $new_id = $db->lastInsertId();
                 $_SESSION['logged_in'] = true;
                 $_SESSION['id'] = $new_id;
                 $_SESSION['role'] = $role;
@@ -96,7 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['user_photo'] = '';
                 $_SESSION['user_whatsapp'] = '';
 
-                header("Location: index.php");
+                echo "<script type='text/javascript'>
+                    window.location.href = '$homeUrl';
+                </script>";
                 exit();
             } else {
                 $signup_error = "Registration failed. Please try again.";
@@ -196,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
                                             <input type="password" class="form-input w-100 rounded-2" name="signup_password" id="signup_password" placeholder="Create a password" required>
                                         </div>
-                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm" disabled>
+                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm">
                                             Create Account
                                         </button>
                                     </form>
@@ -270,4 +283,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script> <?php include 'js/script.js'; ?> </script>
 
 </body>
-</html>
+</html> 
