@@ -3,120 +3,81 @@ require_once 'admin/config.php';
 
 session_start();
 
+$site_title = 'Neu Cooking';
 $domain = 'https://galvin.my.id/project/';
 $baseUrl = $domain;
-$homeUrl = $baseUrl.'index.php';
-$loginUrl = $baseUrl.'login.php';
 $baseUrlAdmin = $baseUrl.'admin/';
 $baseUrlThumbnail = $baseUrl.'images/';
+$homeUrl = $baseUrl.'index.php';
+$loginUrl = $baseUrl.'login.php';
 $adminUrl = $baseUrlAdmin.'dashboard.php';
-$site_title = 'Neu Cooking';
-
-$database = new Database();
-$db = $database->getConnection();
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    echo "<script type='text/javascript'>
-        window.location.href = '$homeUrl';
-    </script>";
+    header("Location: $homeUrl");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+$email = '';
+$first_name = '';
+$last_name = '';
 
+$logIn_errorMessage = '';
+$signUp_errorMessage = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['logIn'])) {
-        $email = $_POST['login_email'];
+        $email = mysqli_real_escape_string($conn, $_POST['login_email']);
         $password = $_POST['login_password'];
 
-        $sql = "SELECT * FROM db_users WHERE email = :email";
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam(':email', $email);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $sql = "SELECT * FROM db_users WHERE email = '$email'";
+        $result = mysqli_query($conn, $sql);
+        $row = mysqli_fetch_assoc($result);
 
         if ($row && password_verify($password, $row['password'])) {
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['role'] = $row['role'];
+            $_SESSION['email'] = $row['email'];
+
             if ($row["role"] == "admin") {
-                $_SESSION['logged_in'] = true;
-                $_SESSION['id'] = $row['id'];
-                $_SESSION['role'] = $row['role'];
-                $_SESSION['email'] = $row['email'];
-                $_SESSION['first_name'] = $row['first_name'];
-                $_SESSION['last_name'] = $row['last_name'];
-                $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
-                // $_SESSION['user_photo'] = $row['user_photo'];
-                // $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
-                echo "<script type='text/javascript'>
-                    window.location.href = '$adminUrl';
-                </script>";
+                header("Location: $adminUrl");
                 exit();
             } elseif ($row["role"] == "user") {
-                $_SESSION['logged_in'] = true;
-                $_SESSION['id'] = $row['id'];
-                $_SESSION['role'] = $row['role'];
-                $_SESSION['email'] = $row['email'];
-                $_SESSION['first_name'] = $row['first_name'];
-                $_SESSION['last_name'] = $row['last_name'];
-                $_SESSION['username'] = $row['first_name'] . ' ' . $row['last_name'];
-                // $_SESSION['user_photo'] = $row['user_photo'];
-                // $_SESSION['user_whatsapp'] = $row['user_whatsapp'];
-                echo "<script type='text/javascript'>
-                    window.location.href = '$homeUrl';
-                </script>";
+                header("Location: $homeUrl");
                 exit();
             }
         } else {
-            $login_error = "Invalid email or password. Please try again.";
+            $logIn_errorMessage = "Invalid email or password. Please try again.";
         }
-    } elseif (isset($_POST['signUp'])) {
+    } 
+    elseif (isset($_POST['signUp'])) {
         $role = 'user';
-        $first_name = $_POST['first_name'];
-        $last_name = $_POST['last_name'];
-        $email = $_POST['signup_email'];
+        $first_name = mysqli_real_escape_string($conn, $_POST['first_name']);
+        $last_name = mysqli_real_escape_string($conn, $_POST['last_name']);
+        $email = mysqli_real_escape_string($conn, $_POST['signup_email']);
         $password = $_POST['signup_password'];
 
-        $check_sql = "SELECT COUNT(*) FROM db_users WHERE email = :email";
-        $check_stmt = $db->prepare($check_sql);
-        $check_stmt->bindParam(':email', $email);
-        $check_stmt->execute();
-        $email_exists = $check_stmt->fetchColumn();
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        if ($email_exists > 0) {
-            $signup_error = "Email already exists. Please use a different email.";
+        $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES ('$role', '$first_name', '$last_name', '$email', '$hashed_password')";
+        $insert_result = mysqli_query($conn, $insert_sql);
+
+        if ($insert_result) {
+            $new_id = mysqli_insert_id($conn);
+
+            $_SESSION['logged_in'] = true;
+            $_SESSION['user_id'] = $new_id;
+            $_SESSION['role'] = $role;
+            $_SESSION['email'] = $email;
+            
+            header("Location: $homeUrl");
+            exit();
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $insert_sql = "INSERT INTO db_users (role, first_name, last_name, email, password) VALUES (:role, :first_name, :last_name, :email, :password)";
-            $insert_stmt = $db->prepare($insert_sql);
-
-            $insert_stmt->bindParam(':role', $role);
-            $insert_stmt->bindParam(':first_name', $first_name);
-            $insert_stmt->bindParam(':last_name', $last_name);
-            $insert_stmt->bindParam(':email', $email);
-            $insert_stmt->bindParam(':password', $hashed_password);
-
-            $insert_result = $insert_stmt->execute();
-
-            if ($insert_result) {
-                $new_id = $db->lastInsertId();
-                $_SESSION['logged_in'] = true;
-                $_SESSION['id'] = $new_id;
-                $_SESSION['role'] = $role;
-                $_SESSION['email'] = $email;
-                $_SESSION['first_name'] = $first_name;
-                $_SESSION['last_name'] = $last_name;
-                $_SESSION['username'] = $first_name . ' ' . $last_name;
-                $_SESSION['user_photo'] = '';
-                $_SESSION['user_whatsapp'] = '';
-
-                echo "<script type='text/javascript'>
-                    window.location.href = '$homeUrl';
-                </script>";
-                exit();
-            } else {
-                $signup_error = "Registration failed. Please try again.";
-            }
+            $signUp_errorMessage = "Registration failed. Please try again.";
         }
     }
 }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -125,11 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo $site_title ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <style> <?php include 'css/style.css'; ?> </style>
 </head>
 <body> 
@@ -152,16 +110,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="popup-header position-relative">
                                 <h2 class="popup-title text-center mb-2 fs-3 fw-bold" id="popupTitle">Log In</h2>
                                 <p class="popup-subtitle text-center text-muted" id="popupSubtitle">Please log in to your account.</p>
-                                <?php if (!empty($login_error)): ?>
-                                    <div class="alert alert-danger text-center mb-3">
-                                        <?php echo ($login_error); ?>
+                                <?php 
+                                if (!empty($logIn_errorMessage)) {
+                                    echo "
+                                    <div class='alert alert-danger alert-dismissible fade show' role='alert'>
+                                        <strong>$logIn_errorMessage</strong>
+                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                                     </div>
-                                <?php endif; ?>
-                                <?php if (!empty($signup_error)): ?>
-                                    <div class="alert alert-danger text-center mb-3">
-                                        <?php echo ($signup_error); ?>
+                                    ";
+                                }
+                                if (!empty($signUp_errorMessage)) {
+                                    echo "
+                                    <div class='alert alert-danger alert-dismissible fade show' role='alert'>
+                                        <strong>$signUp_errorMessage</strong>
+                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                                     </div>
-                                <?php endif; ?>
+                                    ";
+                                }
+                                ?>
                             </div>
 
                             <div class="popup-body">
@@ -170,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <form action="" method="POST">
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="email">Email</label>
-                                            <input type="email" class="form-input w-100 rounded-2" name="login_email" id="login_email" placeholder="Enter your email" required>
+                                            <input type="email" class="form-input w-100 rounded-2" id="login_email" name="login_email" value="<?php echo $email ?>" placeholder="Enter your email" required>
                                         </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
@@ -194,22 +160,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <div class="form-row d-md-flex gap-3">
                                             <div class="form-group mb-4">
                                                 <label class="form-label d-block mb-2 fw-semibold" for="firstName">First Name</label>
-                                                <input type="text" class="form-input w-100 rounded-2" name="first_name" id="firstName" placeholder="First name" required>
+                                                <input type="text" class="form-input w-100 rounded-2" id="firstName" name="first_name" value="<?php echo $first_name ?>" placeholder="First name" required>
                                             </div>
                                             <div class="form-group mb-4">
                                                 <label class="form-label d-block mb-2 fw-semibold" for="lastName">Last Name</label>
-                                                <input type="text" class="form-input w-100 rounded-2" name="last_name" id="lastName" placeholder="Last name" required>
+                                                <input type="text" class="form-input w-100 rounded-2" id="lastName" name="last_name" value="<?php echo $last_name ?>"  placeholder="Last name" required>
                                             </div>
                                         </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="email">Email</label>
-                                            <input type="email" class="form-input w-100 rounded-2" name="signup_email" id="signup_email" placeholder="Enter your email" required>
+                                            <input type="email" class="form-input w-100 rounded-2" id="signup_email" name="signup_email" value="<?php echo $email ?>" placeholder="Enter your email" required>
                                         </div>
                                         <div class="form-group mb-4">
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
-                                            <input type="password" class="form-input w-100 rounded-2" name="signup_password" id="signup_password" placeholder="Create a password" required>
+                                            <input type="password" class="form-input w-100 rounded-2" id="signup_password" name="signup_password" placeholder="Create a password" required>
                                         </div>
-                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm">
+                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm" disabled>
                                             Create Account
                                         </button>
                                     </form>
@@ -279,8 +245,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     //     }
     // });
 </script>
-
 <script> <?php include 'js/script.js'; ?> </script>
-
 </body>
 </html> 

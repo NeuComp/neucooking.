@@ -7,12 +7,89 @@ $site_title = 'Neu Cooking';
 $domain = 'https://galvin.my.id/project/';
 $baseUrl = $domain;
 $loginUrl = $baseUrl.'login.php';
+$currentUrl = $baseUrl.'write-recipies.php';
 
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    echo "<script type='text/javascript'>
-        window.location.href = '$loginUrl';
-    </script>";
+    header("Location: $loginUrl");
     exit();
+}
+
+$title = '';
+$description = '';
+$portions = '';
+$cooking_time_minutes = '';
+
+$errorMessage = '';
+$successMessage = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $description = mysqli_real_escape_string($conn, $_POST['description']);
+    $portions = mysqli_real_escape_string($conn, $_POST['portions']);
+    $cooking_time_minutes = mysqli_real_escape_string($conn, $_POST['cooking_time_minutes']);
+    $recipe_image_path = null;
+
+    if (empty($title) || empty($description) || empty($portions) || empty($cooking_time_minutes)) {
+        $errorMessage = "Please fill in all fields.";
+    }
+
+    if (empty($errorMessage)) {
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
+            $photo = $_FILES['photo'];
+
+            $allowed_extensions = ['png']; 
+            $max_file_size = 300 * 1024;
+
+            $file_name = $photo['name'];
+            $file_size = $photo['size'];
+            $file_tmp = $photo['tmp_name'];
+            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+            if (!in_array($file_ext, $allowed_extensions)) {
+                $errorMessage = "Extension not allowed. Please choose a PNG file.";
+            } elseif ($file_size > $max_file_size) {
+                $errorMessage = "File size must be 300KB or less.";
+            }
+
+            if (empty($errorMessage)) {
+                $unique_filename = uniqid('recipe_', true) . '.' . $file_ext;
+                $upload_directory = 'uploads/recipes/';
+
+                if (!is_dir($upload_directory)) {
+                    mkdir($upload_directory, 0755, true);
+                }
+
+                $destination = $upload_directory . $unique_filename;
+                
+                if (move_uploaded_file($file_tmp, $destination)) {
+                    $recipe_image_path = $destination;
+                } else {
+                    $errorMessage = "Failed to upload photo. Please try again.";
+                }
+            }
+        }
+    }
+
+    if (empty($errorMessage)) {
+        $user_id = $_SESSION['user_id'];
+        
+        $insert_sql = "INSERT INTO db_recipes (user_id, title, description, portions, cooking_time_minutes, image_path) VALUES (?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($insert_sql);
+        $stmt->bind_param("isssis", $user_id, $title, $description, $portions, $cooking_time_minutes, $recipe_image_path);
+
+        if ($stmt->execute()) {
+            $successMessage = "Recipe submitted successfully! Please wait for verification.";
+            $title = '';
+            $description = '';
+            $portions = '';
+            $cooking_time_minutes = '';
+        } else {
+            $errorMessage = "Failed to submit recipe. Please try again. Database error: " . $stmt->error;
+        }
+
+        $stmt->close();
+    }
 }
 
 ?>
@@ -23,8 +100,8 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?php echo $site_title ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style> <?php include 'css/style.css'; ?> </style>
     <style>
         .multiselect-dropdown {
@@ -69,16 +146,34 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
                 <div class="content-start row g-3">
                     <div class="col-12 d-flex justify-content-center">
                         <div class="recipe-form">
-                            <form id="recipeForm" class="recipe-form" enctype="multipart/form-data">
+                            <form method="POST" action="" id="recipeForm" class="recipe-form" enctype="multipart/form-data">
                                 <div class="card recipe-card border-0 rounded-3 mb-4">
                                     <div class="card-body pt-2">
-                                        <div class="d-none d-md-block mb-4">
+                                        <?php 
+                                        if (!empty($errorMessage)) {
+                                            echo "
+                                            <div>
+                                                <div class='alert alert-warning alert-dismissible fade show' role='alert'>
+                                                    <strong>$errorMessage</strong>
+                                                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+                                                </div>
+                                            </div>
+                                            ";
+                                        }
+                                        if (!empty($successMessage)) {
+                                            echo "
+                                            <div>
+                                                <div class='alert alert-success alert-dismissible fade show text-center' role='alert'>
+                                                    <strong>$successMessage</strong>
+                                                    <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+                                                </div>
+                                            </div>
+                                            ";
+                                        }
+                                        ?>
+                                        <div class="mb-4">
                                             <label for="recipeTitle" class="form-label fw-semibold">Recipe Title</label>
-                                            <input type="text" class="form-control form-control-lg recipe-input" id="recipeTitle" name="recipe_title" placeholder="Insert an interesting title..">
-                                        </div>
-                                        <div class="d-block d-md-none mb-4">
-                                            <label for="recipeTitle" class="form-label fw-semibold">Recipe Title</label>
-                                            <input type="text" class="form-control form-control recipe-input" id="recipeTitle" name="recipe_title" placeholder="Insert an interesting title..">
+                                            <input type="text" class="form-control form-control recipe-input" id="recipeTitle" name="title" value="<?php echo $title ?>" placeholder="Insert an interesting title..">
                                         </div>
                                         <div class="mb-4">
                                             <label for="recipeCategory" class="form-label fw-semibold">Recipe Category</label>
@@ -111,8 +206,20 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
                                         </div>
                                         <div class="mb-4">
                                             <label class="form-label fw-semibold">Recipe Photo</label>
+                                            <?php 
+                                            if (!empty($photo_errorMessage)) {
+                                                echo "
+                                                <div>
+                                                    <div class='alert alert-warning alert-dismissible fade show' role='alert'>
+                                                        <strong>$photo_errorMessage</strong>
+                                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
+                                                    </div>
+                                                </div>
+                                                ";
+                                            }
+                                            ?>
                                             <div class="photo-upload-area position-relative">
-                                                <input type="file" class="d-none" id="recipePhoto" name="recipe_photo" accept="image/*">
+                                                <input type="file" class="d-none" id="recipePhoto" name="photo" accept="image/*">
                                                 <div class="upload-placeholder rounded-3 text-center" onclick="document.getElementById('recipePhoto').click()">
                                                     <div class="upload-icon">
                                                         <i class="bi bi-camera text-muted mb-2"></i>
@@ -130,20 +237,20 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
                                         </div>
                                         <div class="mb-4">
                                             <label for="recipeDesc" class="form-label fw-semibold">Description</label>
-                                            <textarea class="form-control recipe-textarea" id="recipeDesc" name="recipe_description" rows="3" placeholder="Tell us more about this dish. What makes this dish so special that you've been inspired to make this dish?"></textarea>
+                                            <textarea class="form-control recipe-textarea" id="recipeDesc" name="description" rows="3" placeholder="Tell us more about this dish. What makes this dish so special that you've been inspired to make this dish?"><?php echo htmlspecialchars($description); ?></textarea>
                                         </div>
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label for="portions" class="form-label fw-semibold">Portion</label>
                                                 <div class="input-group">
-                                                    <input type="number" class="form-control recipe-input" id="portions" name="portions" min="1" placeholder="4">
+                                                    <input type="number" class="form-control recipe-input" id="portions" name="portions" min="1" value="<?php echo $portions ?>" placeholder="4">
                                                     <span class="input-group-text">people</span>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="cookTime" class="form-label fw-semibold">Cooking Time</label>
                                                 <div class="input-group">
-                                                    <input type="number" class="form-control recipe-input" id="cookTime" name="cook_time" min="1" placeholder="30">
+                                                    <input type="number" class="form-control recipe-input" id="cookTime" name="cooking_time_minutes" min="1" value="<?php echo $cooking_time_minutes ?>" placeholder="30">
                                                     <span class="input-group-text">minutes</span>
                                                 </div>
                                             </div>
@@ -201,9 +308,9 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
                                         <div id="stepsList" class="steps-list">
                                             <div class="step-item p-3 rounded-2 mb-3" draggable="true">
                                                 <div class="d-flex align-items-start">
-                                                    <div class="step-drag-handle me-2">
+                                                    <!-- <div class="step-drag-handle me-2">
                                                         <i class="bi bi-grip-vertical text-muted"></i>
-                                                    </div>
+                                                    </div> -->
                                                     <span class="step-number d-inline-flex justify-content-center align-items-center text-white rounded-circle fw-bold">1</span>
                                                     <div class="flex-fill">
                                                         <textarea class="form-control recipe-textarea step-textarea mb-2" name="step_description[]" rows="2" placeholder="Explain this step in detail.."></textarea>
@@ -424,11 +531,6 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     document.getElementById('recipePhoto').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 0.3 * 1024 * 1024) {
-                alert('File size must be or less than 300KB');
-                return;
-            }
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('photoPreview');
@@ -510,9 +612,6 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
         newStep.setAttribute('draggable', 'true');
         newStep.innerHTML = `
             <div class="d-flex align-items-start">
-                <div class="step-drag-handle me-2">
-                    <i class="bi bi-grip-vertical text-muted"></i>
-                </div>
                 <span class="step-number d-inline-flex justify-content-center align-items-center text-white rounded-circle fw-bold">${stepCount}</span>
                 <div class="flex-fill">
                     <textarea class="form-control recipe-textarea step-textarea mb-2" 
@@ -569,46 +668,6 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
         });
     }
     
-    // Form submission
-    document.getElementById('recipeForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Basic validation
-        const title = document.getElementById('recipeTitle').value.trim();
-        const ingredients = document.querySelectorAll('input[name="ingredient_name[]"]');
-        const steps = document.querySelectorAll('textarea[name="step_description[]"]');
-        
-        if (!title) {
-            alert('Recipe title has to be filled!');
-            return;
-        }
-        
-        let hasIngredients = false;
-        ingredients.forEach(input => {
-            if (input.value.trim()) hasIngredients = true;
-        });
-        
-        if (!hasIngredients) {
-            alert('Ingredients form has to be filled!');
-            return;
-        }
-        
-        let hasSteps = false;
-        steps.forEach(input => {
-            if (input.value.trim()) hasSteps = true;
-        });
-        
-        if (!hasSteps) {
-            alert('Steps form has to be filled!');
-            return;
-        }
-        
-        // If validation passes, submit the form
-        alert('Recipe has been successfully made! (Waiting for admin authorization.)');
-        // Ini bagian submit, akan ke dashboard admin baru ke content
-        // this.submit();
-    });
-    
     // Initialize remove button states
     updateRemoveButtons('ingredient');
     updateRemoveButtons('step');
@@ -634,10 +693,6 @@ if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
     // Add event listener to initial step photo input
     document.querySelector('.step-photo-input').addEventListener('change', handleStepPhotoUpload);
 </script>
-
 <script> <?php include 'js/script.js'; ?> </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
 </body>
 </html>

@@ -49,7 +49,7 @@
                                     <img src="/project/images/profile-1.png" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #dee2e6;">
                                 </a>
                             <?php endif; ?>
-                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm ms-2">
+                            <a href="/project/write-recipies.php" class="btn btn-main-theme px-3 py-2 rounded-4 text-white fw-medium shadow-sm ms-2" role="button">
                                 <i class="bi bi-plus-lg me-2"></i>Write a Recipe
                             </a>
                         </div>

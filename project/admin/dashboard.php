@@ -378,7 +378,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                             <table class="table table-dark table-hover">
                                 <thead>
                                     <tr>
-                                        <th><input type="checkbox" class="form-check-input"></th>
+                                        <th>ID</th>
                                         <th>Recipe Name</th>
                                         <th>Cook Time</th>
                                         <th>Portions</th>
@@ -388,69 +388,47 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td><input type="checkbox" class="form-check-input"></td>
-                                        <td><strong>Nasi Gudeg Yogyakarta</strong></td>
-                                        <td>2 hours</td>
-                                        <td>4 servings</td>
-                                        <td>Sarah <span class="badge badge-user">User</span></td>
-                                        <td>2025-07-28</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(1)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(1)">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(1)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="checkbox" class="form-check-input"></td>
-                                        <td><strong>Rendang Padang</strong></td>
-                                        <td>3 hours</td>
-                                        <td>6 servings</td>
-                                        <td>Ahmad <span class="badge badge-chef">Verified Chef</span></td>
-                                        <td>2025-07-27</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(2)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(2)">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(2)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="checkbox" class="form-check-input"></td>
-                                        <td><strong>Sate Ayam Madura</strong></td>
-                                        <td>45 minutes</td>
-                                        <td>3 servings</td>
-                                        <td>Budi <span class="badge badge-chef">Verified Chef</span></td>
-                                        <td>2025-07-26</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info me-1" onclick="viewRecipe(3)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-success me-1" onclick="approveRecipe(3)">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="rejectRecipe(3)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+
+                                    <?php 
+                                    $sql = "SELECT * FROM db_recipes";
+                                    $result = $conn->query($sql);
+
+                                    if (!$result) {
+                                        die("Invalid query: " . $conn->error);
+                                    }
+
+                                    while($row = $result->fetch_assoc()) {
+                                        echo "
+                                        <tr>
+                                            <td>$row[recipe_id]</td>
+                                            <td><strong>$row[title]</strong></td>
+                                            <td>$row[cooking_time_minutes] Minutes</td>
+                                            <td>$row[portions]</td>
+                                            <td>User ID = $row[user_id]</td>
+                                            <td>$row[created_at]</td>
+                                            <td>
+                                                <button class='btn btn-sm btn-info me-1' onclick='viewRecipe($row[recipe_id])'>
+                                                    <i class='fas fa-eye'></i>
+                                                </button>
+                                                <a href='/recipe/edit.php?id=$row[recipe_id]' class='btn btn-sm btn-success me-1'>
+                                                    <i class='fas fa-check'></i>
+                                                </a>
+                                                <a href='/recipe/delete.php?id=$row[recipe_id]' class='btn btn-sm btn-danger'>
+                                                    <i class='fas fa-times'></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        ";
+                                    }
+                                    ?>
+                                    <!-- <span class="badge badge-user">User</span> -->
+
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     
-                    <nav class="mt-3">
+                    <!-- <nav class="mt-3">
                         <ul class="pagination justify-content-center">
                             <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
                             <li class="page-item active"><a class="page-link" href="#">1</a></li>
@@ -458,7 +436,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                             <li class="page-item"><a class="page-link" href="#">3</a></li>
                             <li class="page-item"><a class="page-link" href="#">Next</a></li>
                         </ul>
-                    </nav>
+                    </nav> -->
                 </div>
 
                 <!-- Recipe Management Section -->
@@ -1132,27 +1110,6 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
         function viewRecipe(id) {
             const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
             modal.show();
-        }
-
-        function approveRecipe(id) {
-            if (confirm('Are you sure you want to approve this recipe?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Recipe approved successfully!');
-                    // Remove from pending list or update status
-                }, 500);
-            }
-        }
-
-        function rejectRecipe(id) {
-            const reason = prompt('Please provide a reason for rejection:');
-            if (reason) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Recipe rejected successfully!');
-                    // Remove from pending list or update status
-                }, 500);
-            }
         }
 
         function deleteRecipe(id) {

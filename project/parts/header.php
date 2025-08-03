@@ -1,5 +1,6 @@
 <?php
 require 'admin/config.php';
+
 session_start();
 
 $site_title = 'Neu Cooking';
