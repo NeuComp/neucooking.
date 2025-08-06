@@ -25,6 +25,86 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
     exit();
 }
 
+$total_users = 0;
+$total_pending_recipes = 0;
+
+$sql_users = "SELECT COUNT(*) AS total_users FROM db_users";
+$result_users = $conn->query($sql_users);
+if ($result_users) {
+    $row_users = $result_users->fetch_assoc();
+    $total_users = $row_users['total_user
+    s'];
+}
+
+$sql_recipes = "SELECT COUNT(*) AS total_pending_recipes FROM db_recipes";
+$result_recipes = $conn->query($sql_recipes);
+if ($result_recipes) {
+    $row_recipes = $result_recipes->fetch_assoc();
+    $total_pending_recipes = $row_recipes['total_pending_recipes'];
+}
+
+function time_ago($datetime, $full = false) {
+    $now = new DateTime;
+    $ago = new DateTime($datetime);
+    $diff = $now->diff($ago);
+
+    $diff->w = floor($diff->d / 7);
+    $diff->d -= $diff->w * 7;
+
+    $string = array(
+        'y' => 'year',
+        'm' => 'month',
+        'w' => 'week',
+        'd' => 'day',
+        'h' => 'hour',
+        'i' => 'minute',
+        's' => 'second',
+    );
+    foreach ($string as $k => &$v) {
+        if ($diff->$k) {
+            $v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+        } else {
+            unset($string[$k]);
+        }
+    }
+
+    if (!$full) $string = array_slice($string, 0, 1);
+    return $string ? implode(', ', $string) . ' ago' : 'just now';
+}
+
+$recent_activities = [];
+
+// Fetch recent user registrations
+$sql_users = "SELECT user_id, first_name, last_name, created_at, 'user_registered' as activity_type, NULL as title, NULL as status FROM db_users ORDER BY created_at DESC LIMIT 5";
+$result_users = $conn->query($sql_users);
+
+if ($result_users && $result_users->num_rows > 0) {
+    while ($row = $result_users->fetch_assoc()) {
+        $recent_activities[] = $row;
+    }
+}
+
+// Fetch recent recipe submissions and updates
+$sql_recipes = "SELECT r.recipe_id, r.title, r.status, r.created_at, 'recipe_activity' as activity_type, u.first_name, u.last_name
+                FROM db_recipes r
+                JOIN db_users u ON r.user_id = u.user_id
+                ORDER BY r.created_at DESC LIMIT 5"; // Limit to avoid too many results
+$result_recipes = $conn->query($sql_recipes);
+
+if ($result_recipes && $result_recipes->num_rows > 0) {
+    while ($row = $result_recipes->fetch_assoc()) {
+        $recent_activities[] = $row;
+    }
+}
+
+// Sort all activities by created_at in descending order
+usort($recent_activities, function($a, $b) {
+    return strtotime($b['created_at']) - strtotime($a['created_at']);
+});
+
+// Limit to top 10 activities after sorting
+$recent_activities = array_slice($recent_activities, 0, 10);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,94 +117,80 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #1a1d29;
-            --sidebar-bg: #2d3142;
-            --card-bg: #2a2d3a;
-            --text-light: #e9ecef;
-            --border-color: #495057;
-            --primary-color: #4f46e5;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --info-color: #06b6d4;
-        }
-        
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-        }
-        
-        .sidebar {
-            background: linear-gradient(135deg, var(--sidebar-bg) 0%, #363a52 100%);
-            min-height: 100vh;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-        }
-        
-        .sidebar .nav-link {
-            color: var(--text-light);
-            border-radius: 8px;
-            margin: 2px 0;
-        }
-        
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background-color: var(--primary-color);
-        }
-        
-        .main-content {
-            background-color: var(--bg-dark);
-            min-height: 100vh;
-        }
-        
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-        }
-        
-        .table-dark {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-        }
-        
-        .btn-outline-light {
-            border-color: var(--border-color);
-        }
-        
-        .form-control, .form-select {
-            background-color: var(--card-bg);
-            border-color: var(--border-color);
-            color: var(--text-light);
-        }
-        
-        .form-control:focus, .form-select:focus {
-            background-color: var(--card-bg);
-            border-color: var(--primary-color);
-            color: var(--text-light);
-            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
-        }
-        
-        .modal-content {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-        }
-        
-        .badge-user { background-color: var(--info-color); }
-        .badge-chef { background-color: var(--warning-color); }
-        .badge-pending { background-color: var(--warning-color); }
-        .badge-approved { background-color: var(--success-color); }
-        .badge-rejected { background-color: var(--danger-color); }
-        
-        .activity-item {
-            border-left: 3px solid var(--primary-color);
-            padding-left: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .stats-icon {
-            font-size: 2.5rem;
-            opacity: 0.7;
-        }
+    :root {
+        --bg-dark: #1a1d29;
+        --sidebar-bg: #2d3142;
+        --card-bg: #2a2d3a;
+        --text-light: #e9ecef;
+        --border-color: #495057;
+        --primary-color: #4f46e5;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --info-color: #06b6d4;
+    }
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+    }
+    .sidebar {
+        background: linear-gradient(135deg, var(--sidebar-bg) 0%, #363a52 100%);
+        min-height: 100vh;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+    .sidebar .nav-link {
+        color: var(--text-light);
+        border-radius: 8px;
+        margin: 2px 0;
+    }
+    .sidebar .nav-link:hover, .sidebar .nav-link.active {
+        background-color: var(--primary-color);
+    }
+    .main-content {
+        background-color: var(--bg-dark);
+        min-height: 100vh;
+    }
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+    .table-dark {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+    }
+    .btn-outline-light {
+        border-color: var(--border-color);
+    }
+    .form-control, .form-select {
+        background-color: var(--card-bg);
+        border-color: var(--border-color);
+        color: var(--text-light);
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: var(--card-bg);
+        border-color: var(--primary-color);
+        color: var(--text-light);
+        box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+    }
+    .modal-content {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+    }
+    .badge-user { background-color: var(--info-color); }
+    .badge-chef { background-color: var(--warning-color); }
+    .badge-pending { background-color: var(--warning-color); }
+    .badge-approved { background-color: var(--success-color); }
+    .badge-rejected { background-color: var(--danger-color); }
+    .activity-item {
+        border-left: 3px solid var(--primary-color);
+        padding-left: 15px;
+        margin-bottom: 15px;
+    }
+    .stats-icon {
+        font-size: 2.5rem;
+        opacity: 0.7;
+    }
     </style>
 </head>
 <body>
@@ -144,7 +210,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="showSection('pending')">
                                 <i class="bi bi-clock-fill me-2"></i> Pending Recipes
-                                <span class="badge bg-warning ms-2">12</span>
+                                <span class="badge bg-warning ms-2"><?php echo number_format($total_pending_recipes); ?></span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -203,7 +269,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-uppercase mb-1">Total Recipes</div>
-                                            <div class="h5 mb-0 font-weight-bold">156</div>
+                                            <div class="h5 mb-0 font-weight-bold">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="bi bi-journal-text stats-icon"></i>
@@ -218,7 +284,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-uppercase mb-1">Pending Review</div>
-                                            <div class="h5 mb-0 font-weight-bold">12</div>
+                                            <div class="h5 mb-0 font-weight-bold"><?php echo number_format($total_pending_recipes); ?></div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="bi bi-clock-history stats-icon"></i>
@@ -233,7 +299,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-uppercase mb-1">Total Users</div>
-                                            <div class="h5 mb-0 font-weight-bold">2,847</div>
+                                            <div class="h5 mb-0 font-weight-bold"><?php echo number_format($total_users); ?></div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="bi bi-people stats-icon"></i>
@@ -248,7 +314,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-uppercase mb-1">Verified Chefs</div>
-                                            <div class="h5 mb-0 font-weight-bold">43</div>
+                                            <div class="h5 mb-0 font-weight-bold">0</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="bi bi-award stats-icon"></i>
@@ -266,7 +332,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i> Recent Activities</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="activity-item">
+                                    <!-- <div class="activity-item">
                                         <div class="d-flex justify-content-between">
                                             <div>
                                                 <i class="bi bi-person-check-fill text-success me-2"></i>
@@ -283,25 +349,56 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                             </div>
                                             <small>2 hours ago</small>
                                         </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="bi bi-hourglass-split text-warning me-2"></i>
-                                                Recipe <strong>Nasi Gudeg</strong> submitted by Sarah is waiting for review
-                                            </div>
-                                            <small>5 hours ago</small>
+                                    </div> -->
+                                    <?php if (empty($recent_activities)): ?>
+                                        <p class="text-muted text-center">No recent activities to display.</p>
+                                    <?php else: ?>
+                                        <div class="recent-activities-list">
+                                            <?php foreach ($recent_activities as $activity): ?>
+                                                <div class="activity-item p-2 rounded-2 mb-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <?php
+                                                            $icon = '';
+                                                            $message = '';
+                                                            $time_ago_text = time_ago($activity['created_at']);
+
+                                                            if ($activity['activity_type'] === 'user_registered') {
+                                                                $icon = 'bi-person-plus-fill text-info';
+                                                                $full_name = htmlspecialchars($activity['first_name'] . ' ' . $activity['last_name']);
+                                                                $message = "New user <strong>{$full_name}</strong> registered";
+                                                                } elseif ($activity['activity_type'] === 'recipe_activity') {
+                                                                    $recipe_title = htmlspecialchars($activity['title']);
+                                                                    $user_full_name = htmlspecialchars($activity['first_name'] . ' ' . $activity['last_name']);
+                                                                    switch ($activity['status']) {
+                                                                        case 'pending':
+                                                                            $icon = 'bi-hourglass-split text-warning';
+                                                                            $message = "Recipe <strong>{$recipe_title}</strong> submitted by <strong>{$user_full_name}</strong> is waiting for review";
+                                                                            break;
+                                                                        case 'approved':
+                                                                            $icon = 'bi-check-circle-fill text-success';
+                                                                            $message = "Recipe <strong>{$recipe_title}</strong> submitted by <strong>{$user_full_name}</strong> has been approved";
+                                                                            break;
+                                                                        case 'rejected':
+                                                                            $icon = 'bi-x-circle-fill text-danger';
+                                                                            $message = "Recipe <strong>{$recipe_title}</strong> submitted by <strong>{$user_full_name}</strong> has been rejected";
+                                                                            break;
+                                                                        default:
+                                                                            $icon = 'bi-info-circle-fill text-secondary';
+                                                                            $message = "Recipe <strong>{$recipe_title}</strong> by <strong>{$user_full_name}</strong> activity";
+                                                                            break;
+                                                                    }
+                                                                }
+                                                            ?>
+                                                            <i class="bi <?php echo $icon; ?> me-2"></i>
+                                                            <?php echo $message; ?>
+                                                        </div>
+                                                        <small class="text-white"><?php echo $time_ago_text; ?></small>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
                                         </div>
-                                    </div>
-                                    <div class="activity-item">
-                                        <div class="d-flex justify-content-between">
-                                            <div>
-                                                <i class="bi bi-person-plus-fill text-info me-2"></i>
-                                                New user <strong>Ahmad Rizki</strong> registered
-                                            </div>
-                                            <small>1 day ago</small>
-                                        </div>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -345,16 +442,15 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Pending Recipes</h1>
                         <div class="btn-toolbar mb-2 mb-md-0">
-                            <div class="btn-group me-2">
-                                <button type="button" class="btn btn-sm btn-outline-light">Export</button>
-                                <button type="button" class="btn btn-sm btn-primary">Bulk Actions</button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-light px-3">Export</button>
                             </div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" placeholder="Search recipes..." id="pendingSearch">
+                            <input type="text" class="form-control" id="pendingSearch">
                         </div>
                         <div class="col-md-3">
                             <select class="form-select">
@@ -388,15 +484,17 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     </tr>
                                 </thead>
                                 <tbody>
-
                                     <?php 
-                                    $sql = "SELECT * FROM db_recipes";
+                                    $sql = "SELECT 
+                                            db_recipes.*, 
+                                            db_users.first_name, 
+                                            db_users.last_name
+                                            FROM db_recipes
+                                            INNER JOIN db_users ON db_recipes.user_id = db_users.user_id";
                                     $result = $conn->query($sql);
-
                                     if (!$result) {
                                         die("Invalid query: " . $conn->error);
                                     }
-
                                     while($row = $result->fetch_assoc()) {
                                         echo "
                                         <tr>
@@ -404,7 +502,7 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                             <td><strong>$row[title]</strong></td>
                                             <td>$row[cooking_time_minutes] Minutes</td>
                                             <td>$row[portions]</td>
-                                            <td>User ID = $row[user_id]</td>
+                                            <td>$row[first_name] $row[last_name]</td>
                                             <td>$row[created_at]</td>
                                             <td>
                                                 <button class='btn btn-sm btn-info me-1' onclick='viewRecipe($row[recipe_id])'>
@@ -422,7 +520,6 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
                                     }
                                     ?>
                                     <!-- <span class="badge badge-user">User</span> -->
-
                                 </tbody>
                             </table>
                         </div>
@@ -1083,130 +1180,130 @@ if (!isset($_SESSION['role']) || ($_SESSION['role'] !== 'admin' && $_SESSION['ro
         </div>
     </div>
 
-    <script>
-        // Global variables
-        let currentSection = 'dashboard';
+<script>
+// Global variables
+let currentSection = 'dashboard';
 
-        // Navigation functions
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Show selected section
-            document.getElementById(sectionName + '-section').style.display = 'block';
-            
-            // Update navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            currentSection = sectionName;
-        }
+// Navigation functions
+function showSection(sectionName) {
+    // Hide all sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show selected section
+    document.getElementById(sectionName + '-section').style.display = 'block';
+    
+    // Update navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    currentSection = sectionName;
+}
 
-        // Recipe management functions
-        function viewRecipe(id) {
-            const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
-            modal.show();
-        }
+// Recipe management functions
+function viewRecipe(id) {
+    const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
+    modal.show();
+}
 
-        function deleteRecipe(id) {
-            if (confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Recipe deleted successfully!');
-                    // Remove from list
-                }, 500);
-            }
-        }
+function deleteRecipe(id) {
+    if (confirm('Are you sure you want to delete this recipe? This action cannot be undone.')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('Recipe deleted successfully!');
+            // Remove from list
+        }, 500);
+    }
+}
 
-        // User management functions
-        function verifyUser(id) {
-            if (confirm('Are you sure you want to verify this user as a chef?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('User verified successfully!');
-                    // Update user status
-                }, 500);
-            }
-        }
+// User management functions
+function verifyUser(id) {
+    if (confirm('Are you sure you want to verify this user as a chef?')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('User verified successfully!');
+            // Update user status
+        }, 500);
+    }
+}
 
-        function removeVerification(id) {
-            if (confirm('Are you sure you want to remove chef verification from this user?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Verification removed successfully!');
-                    // Update user status
-                }, 500);
-            }
-        }
+function removeVerification(id) {
+    if (confirm('Are you sure you want to remove chef verification from this user?')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('Verification removed successfully!');
+            // Update user status
+        }, 500);
+    }
+}
 
-        // Report management functions
-        function viewReport(id) {
-            alert('Viewing report details for report #' + id);
-            // Implement report detail view
-        }
+// Report management functions
+function viewReport(id) {
+    alert('Viewing report details for report #' + id);
+    // Implement report detail view
+}
 
-        function resolveReport(id) {
-            if (confirm('Mark this report as resolved?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Report resolved successfully!');
-                    // Update report status
-                }, 500);
-            }
-        }
+function resolveReport(id) {
+    if (confirm('Mark this report as resolved?')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('Report resolved successfully!');
+            // Update report status
+        }, 500);
+    }
+}
 
-        function dismissReport(id) {
-            if (confirm('Dismiss this report?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Report dismissed successfully!');
-                    // Update report status
-                }, 500);
-            }
-        }
+function dismissReport(id) {
+    if (confirm('Dismiss this report?')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('Report dismissed successfully!');
+            // Update report status
+        }, 500);
+    }
+}
 
-        // Settings functions
-        function saveSettings() {
-            // Simulate saving settings
-            setTimeout(() => {
-                alert('Settings saved successfully!');
-            }, 500);
-        }
+// Settings functions
+function saveSettings() {
+    // Simulate saving settings
+    setTimeout(() => {
+        alert('Settings saved successfully!');
+    }, 500);
+}
 
-        function toggleMaintenance() {
-            const isEnabled = document.getElementById('maintenanceMode').checked;
-            if (confirm(isEnabled ? 'Enable maintenance mode?' : 'Disable maintenance mode?')) {
-                // Simulate API call
-                setTimeout(() => {
-                    alert('Maintenance mode ' + (isEnabled ? 'enabled' : 'disabled') + ' successfully!');
-                }, 500);
-            }
-        }
+function toggleMaintenance() {
+    const isEnabled = document.getElementById('maintenanceMode').checked;
+    if (confirm(isEnabled ? 'Enable maintenance mode?' : 'Disable maintenance mode?')) {
+        // Simulate API call
+        setTimeout(() => {
+            alert('Maintenance mode ' + (isEnabled ? 'enabled' : 'disabled') + ' successfully!');
+        }, 500);
+    }
+}
 
-        // Search functionality
-        document.getElementById('pendingSearch')?.addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            // Implement search functionality
-            console.log('Searching for:', searchTerm);
-        });
+// Search functionality
+document.getElementById('pendingSearch')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    // Implement search functionality
+    console.log('Searching for:', searchTerm);
+});
 
-        // Initialize tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 
-        // Simulate real-time updates
-        setInterval(function() {
-            // Update timestamps, counts, etc.
-            // This would normally come from WebSocket or periodic API calls
-        }, 30000);
-    </script>
+// Simulate real-time updates
+setInterval(function() {
+    // Update timestamps, counts, etc.
+    // This would normally come from WebSocket or periodic API calls
+}, 30000);
+</script>
 </body>
 </html>

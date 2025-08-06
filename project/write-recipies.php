@@ -18,74 +18,75 @@ $title = '';
 $description = '';
 $portions = '';
 $cooking_time_minutes = '';
-
 $errorMessage = '';
 $successMessage = '';
+$recipe_image_path = null;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $description = mysqli_real_escape_string($conn, $_POST['description']);
-    $portions = mysqli_real_escape_string($conn, $_POST['portions']);
-    $cooking_time_minutes = mysqli_real_escape_string($conn, $_POST['cooking_time_minutes']);
-    $recipe_image_path = null;
+    $portions = $_POST['portions'];
+    $cooking_time_minutes = $_POST['cooking_time_minutes'];
 
-    if (empty($title) || empty($description) || empty($portions) || empty($cooking_time_minutes)) {
+    if (!$title || !$description || !$portions || !$cooking_time_minutes) {
         $errorMessage = "Please fill in all fields.";
     }
 
-    if (empty($errorMessage)) {
-        if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
-            $photo = $_FILES['photo'];
+    if (!$errorMessage && (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK)) {
+        $errorMessage = "Please upload a valid PNG photo.";
+    }
 
-            $allowed_extensions = ['png']; 
-            $max_file_size = 300 * 1024;
+    if (!$errorMessage) {
+        $photo = $_FILES['photo'];
+        $file_ext = strtolower(pathinfo($photo['name'], PATHINFO_EXTENSION));
+        $file_size = $photo['size'];
 
-            $file_name = $photo['name'];
-            $file_size = $photo['size'];
-            $file_tmp = $photo['tmp_name'];
-            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-            if (!in_array($file_ext, $allowed_extensions)) {
-                $errorMessage = "Extension not allowed. Please choose a PNG file.";
-            } elseif ($file_size > $max_file_size) {
-                $errorMessage = "File size must be 300KB or less.";
+        if ($file_ext !== 'png') {
+            $errorMessage = "Only PNG images are allowed.";
+        } elseif ($file_size > 300 * 1024) {
+            $errorMessage = "File size must be 300KB or less.";
+        } else {
+            $upload_directory = 'uploads/recipes/';
+            if (!is_dir($upload_directory)) {
+                mkdir($upload_directory, 0755, true);
             }
 
-            if (empty($errorMessage)) {
-                $unique_filename = uniqid('recipe_', true) . '.' . $file_ext;
-                $upload_directory = 'uploads/recipes/';
+            $unique_filename = uniqid('recipe_', true) . '.png';
+            $destination = $upload_directory . $unique_filename;
 
-                if (!is_dir($upload_directory)) {
-                    mkdir($upload_directory, 0755, true);
-                }
-
-                $destination = $upload_directory . $unique_filename;
-                
-                if (move_uploaded_file($file_tmp, $destination)) {
-                    $recipe_image_path = $destination;
-                } else {
-                    $errorMessage = "Failed to upload photo. Please try again.";
-                }
+            if (move_uploaded_file($photo['tmp_name'], $destination)) {
+                $recipe_image_path = $destination;
+            } else {
+                $errorMessage = "Failed to save uploaded file.";
             }
         }
     }
 
-    if (empty($errorMessage)) {
-        $user_id = $_SESSION['user_id'];
-        
-        $insert_sql = "INSERT INTO db_recipes (user_id, title, description, portions, cooking_time_minutes, image_path) VALUES (?, ?, ?, ?, ?, ?)";
-        
-        $stmt = $conn->prepare($insert_sql);
+    if (!$errorMessage) {
+        $user_id = $_SESSION['user_id']; // You already validated login elsewhere
+
+        $sql = "INSERT INTO db_recipes (user_id, title, description, portions, cooking_time_minutes, image_path) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("isssis", $user_id, $title, $description, $portions, $cooking_time_minutes, $recipe_image_path);
 
         if ($stmt->execute()) {
+            $recipe_id = $conn->insert_id;
+            $category_ids = json_decode($_POST['recipe_categories'], true);
+
+            if (is_array($category_ids)) {
+                $stmt_category = $conn->prepare("INSERT INTO db_recipe_categories (recipe_id, category_id) VALUES (?, ?)");
+                foreach ($category_ids as $cat_id) {
+                    $stmt_category->bind_param("ii", $recipe_id, $cat_id);
+                    $stmt_category->execute();
+                }
+                $stmt_category->close();
+            }
+
             $successMessage = "Recipe submitted successfully! Please wait for verification.";
-            $title = '';
-            $description = '';
-            $portions = '';
-            $cooking_time_minutes = '';
+            $title = $description = $portions = $cooking_time_minutes = '';
+            $recipe_image_path = null;
         } else {
-            $errorMessage = "Failed to submit recipe. Please try again. Database error: " . $stmt->error;
+            $errorMessage = "Database error: " . $stmt->error;
         }
 
         $stmt->close();
@@ -104,31 +105,170 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style> <?php include 'css/style.css'; ?> </style>
     <style>
-        .multiselect-dropdown {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .multiselect-option:hover {
-            background-color: var(--bs-light) !important;
-        }
-        
-        .multiselect-option.selected {
-            background-color: var(--bs-warning-bg-subtle) !important;
-            color: var(--bs-warning-text-emphasis) !important;
-        }
-        
-        .tag-remove {
-            cursor: pointer;
-        }
-        
-        .dropdown-toggle::after {
-            transition: transform 0.2s ease;
-        }
-        
-        .dropdown-toggle[aria-expanded="true"]::after {
-            transform: rotate(180deg);
-        }
+    /* Enhanced dropdown styling */
+    .category-dropdown .dropdown-menu {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-radius: 12px;
+        padding: 0;
+        margin-top: 8px;
+    }
+    /* Target all checked Bootstrap checkboxes */
+    .form-check-input:checked {
+        background-color: var(--primary-color); /* Example: Bootstrap's orange */
+        border-color: var(--primary-color);
+    }
+    /* Optional: Improve checkbox hover */
+    .form-check-input:hover {
+        cursor: pointer;
+        box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25); /* subtle orange glow */
+    }
+    /* Search input styling */
+    .category-search {
+        position: sticky;
+        top: 0;
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 12px 16px;
+        border-radius: 12px 12px 0 0;
+        z-index: 10;
+    }
+    .category-search .form-control {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .category-search .form-control:focus {
+        border-color: var(--primary-color);
+    }
+    /* Category options list styling */
+    .category-options-container {
+        max-height: 280px;
+        overflow-y: auto;
+        padding: 8px 0;
+    }
+    .category-option {
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: none;
+    }
+    .category-option-content {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        margin: 2px 8px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    .category-option-content:hover {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+    }
+    .category-option-content.selected {
+        background-color: var(--bs-warning-bg-subtle) !important;
+        color: var(--bs-warning-text-emphasis) !important;
+    }
+    .category-checkbox {
+        margin-right: 12px;
+        width: 18px;
+        height: 18px;
+        accent-color: #fd7e14;
+    }
+    .category-icon {
+        margin-right: 8px;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+    .category-label {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #495057;
+        margin: 0;
+        cursor: pointer;
+    }
+    /* Selected tags styling */
+    .selected-tags {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .category-tag {
+        background-color: var(--bs-warning-bg-subtle) !important;
+        color: var(--bs-warning-text-emphasis) !important;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+    }
+    .category-tag:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(253, 126, 20, 0.3);
+    }
+    .tag-remove-btn {
+        background-color: var(--bs-warning-bg-subtle) !important;
+        border: none;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+        font-size: 12px;
+        transition: background-color 0.2s ease;
+    }
+    .tag-remove-btn:hover {
+        background: rgba(0,0,0,0.4);
+    }
+    /* Dropdown button styling */
+    .category-dropdown-btn {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 12px 16px;
+        background: white;
+        transition: all 0.2s ease;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .category-dropdown-btn:hover {
+        border-color: #fd7e14;
+        box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.1);
+    }
+    .category-dropdown-btn:focus {
+        border-color: #fd7e14;
+        box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25);
+    }
+    .dropdown-toggle::after {
+        color: #6c757d;
+    }
+    .no-categories {
+        color: #6c757d;
+    }
+    /* Scrollbar styling */
+    .category-options-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    .category-options-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .category-options-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+    .category-options-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
     </style>
 </head>
 <body> 
@@ -173,51 +313,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         ?>
                                         <div class="mb-4">
                                             <label for="recipeTitle" class="form-label fw-semibold">Recipe Title</label>
-                                            <input type="text" class="form-control form-control recipe-input" id="recipeTitle" name="title" value="<?php echo $title ?>" placeholder="Insert an interesting title..">
+                                            <input type="text" class="form-control recipe-input" id="recipeTitle" name="title" value="<?php echo $title ?>" placeholder="Insert an interesting title..">
                                         </div>
                                         <div class="mb-4">
                                             <label for="recipeCategory" class="form-label fw-semibold">Recipe Category</label>
-                                            <div class="dropdown w-100" id="recipeCategoryDropdown">
-                                                <button class="recipe-input dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center rounded-3 py-3" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="categoryDropdownButton">
-                                                    <div class="d-flex flex-wrap gap-1" id="selectedTagsContainer">
-                                                        <span class="text-muted">Select categories..</span>
-                                                    </div>
+                                            <div class="dropdown category-dropdown">
+                                                <button class="form-control text-start dropdown-toggle category-dropdown-btn bg-light rounded-2" type="button" id="categoryDropdownButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <span id="selectedCategorySummary">Select categories..</span>
                                                 </button>
-                                                <div class="dropdown-menu w-100 p-0 multiselect-dropdown" id="categoryDropdownMenu">
-                                                    <div class="p-3 border-bottom">
-                                                        <div class="input-group">
-                                                            <span class="input-group-text">
-                                                                <i class="bi bi-search"></i>
+                                                <ul class="dropdown-menu w-100 shadow-sm border" id="categoryDropdownMenu">
+                                                    <!-- Search input -->
+                                                    <li class="category-search">
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text border-end-0 bg-transparent">
+                                                                <i class="bi bi-search text-muted"></i>
                                                             </span>
-                                                            <input type="text" class="form-control" placeholder="Search categories.." id="categorySearch" onkeyup="filterCategories(this.value)">
+                                                            <input type="text" class="form-control" id="categorySearchInput" placeholder="Search categories..." autocomplete="off">
                                                         </div>
+                                                    </li>
+                                                    <!-- Categories container -->
+                                                    <div class="category-options-container" id="categoryOptionsList">
+                                                        <!-- Categories will be rendered here -->
                                                     </div>
-                                                    <div class="py-2" id="categoryOptionsList">
-                                                        <!-- Options populated by JavaScript -->
-                                                    </div>
-                                                </div>
+                                                    <li class="no-categories d-none text-center fst-italic pb-3" id="noCategoriesMessage">
+                                                        <i class="bi bi-search me-2"></i>No categories found
+                                                    </li>
+                                                </ul>
                                             </div>
-                                            <div class="mt-4">
-                                                <h6 class="text-muted mb-2">Selected Categories:</h6>
-                                                <div id="selectedCategoriesDisplay" class="text-secondary fst-italic">
-                                                    None selected
-                                                </div>
+                                            <!-- Selected badges -->
+                                            <div class="selected-tags" id="selectedTagsContainer"></div>
+                                            <input type="hidden" name="recipe_categories" id="recipeCategoriesInput">
+                                            <div class="d-none">
+                                                <h6>Selected Categories JSON:</h6>
+                                                <code id="jsonOutput">[]</code>
                                             </div>
                                         </div>
                                         <div class="mb-4">
                                             <label class="form-label fw-semibold">Recipe Photo</label>
-                                            <?php 
-                                            if (!empty($photo_errorMessage)) {
-                                                echo "
-                                                <div>
-                                                    <div class='alert alert-warning alert-dismissible fade show' role='alert'>
-                                                        <strong>$photo_errorMessage</strong>
-                                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
-                                                    </div>
-                                                </div>
-                                                ";
-                                            }
-                                            ?>
                                             <div class="photo-upload-area position-relative">
                                                 <input type="file" class="d-none" id="recipePhoto" name="photo" accept="image/*">
                                                 <div class="upload-placeholder rounded-3 text-center" onclick="document.getElementById('recipePhoto').click()">
@@ -237,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         </div>
                                         <div class="mb-4">
                                             <label for="recipeDesc" class="form-label fw-semibold">Description</label>
-                                            <textarea class="form-control recipe-textarea" id="recipeDesc" name="description" rows="3" placeholder="Tell us more about this dish. What makes this dish so special that you've been inspired to make this dish?"><?php echo htmlspecialchars($description); ?></textarea>
+                                            <textarea class="form-control recipe-textarea" id="recipeDesc" name="description" placeholder="Tell us more about this recipe.." rows="3"></textarea>
                                         </div>
                                         <div class="row g-3">
                                             <div class="col-md-6">
@@ -360,338 +492,323 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     <!-- End of wrapper -->
     </div>
-
+<?php
+$categories_from_db = [];
+$sql = "SELECT id, category_name, category_type, icon FROM db_categories ORDER BY id ASC"; 
+$result = $conn->query($sql);
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $categories_from_db[] = [
+            'id' => (int)$row['id'],
+            'label' => $row['category_name'],
+            'icon' => $row['icon']
+        ];
+    }
+}
+?>
 <script>
-    const categories = [
-        { value: 'simple-daily-dishes', label: 'Simple Daily Dishes', icon: 'bi-journal-text' },
-        { value: 'breakfast', label: 'Breakfast', icon: 'bi-cup-hot' },
-        { value: 'lunch', label: 'Lunch', icon: 'bi-bag' },
-        { value: 'dinner', label: 'Dinner', icon: 'bi-moon' },
-        { value: 'snacks', label: 'Snacks', icon: 'bi-cookie' },
-        { value: 'desserts', label: 'Desserts', icon: 'bi-cake' },
-        { value: 'beverages', label: 'Beverage', icon: 'bi-cup-straw' },
+const categories = <?php echo json_encode($categories_from_db); ?>;
 
-        { value: 'international-cuisine', label: 'International Cuisine', icon: 'bi-globe' },
-        { value: 'indonesian', label: 'Indonesian', icon: 'bi-flag' },
-        { value: 'chinese', label: 'Chinese', icon: 'bi-flag' },
-        { value: 'japanese', label: 'Japanese', icon: 'bi-flag' },
-        { value: 'korean', label: 'Korean', icon: 'bi-flag' },
-        { value: 'western', label: 'Western', icon: 'bi-flag' },
-        { value: 'middle-eastern', label: 'Middle Eastern', icon: 'bi-flag' },
+let selectedCategories = [];
+let filteredCategories = [...categories];
 
-        { value: 'diet-lifestyle', label: 'Diet Lifestyle', icon: 'bi-activity' },
-        { value: 'vegan', label: 'Vegan', icon: 'bi-emoji-laughing-fill' },
-        { value: 'gluten-free', label: 'Gluten Free', icon: 'bi-x-circle' },
-        { value: 'dairy-free', label: 'Dairy Free', icon: 'bi-droplet-fill' },
-        { value: 'low-carb', label: 'Low Carb', icon: 'bi-bar-chart-fill' },
-        { value: 'high-protein', label: 'High Protein', icon: 'bi-arrow-up-circle' },
-        { value: 'diabetic-friendly', label: 'Diabetic Friendly', icon: 'bi-heart-pulse' },
+function renderCategoryOptions() {
+    const container = document.getElementById("categoryOptionsList");
+    const noResultsMsg = document.getElementById("noCategoriesMessage");
 
-        { value: 'by-ingredient', label: 'By Ingredient', icon: 'bi-basket' },
-        { value: 'red-meat', label: 'Red Meat', icon: 'bi-grid-fill' },
-        { value: 'poultry-and-eggs', label: 'Poultry & Eggs', icon: 'bi-egg' },
-        { value: 'seafood', label: 'Seafood', icon: 'bi-water' },
-        { value: 'vegetables-and-fruit', label: 'Vegetables & Fruit', icon: 'bi-apple' },
-        { value: 'noodles-and-pasta', label: 'Noodles & Pasta', icon: 'bi-chevron-double-down' },
-        { value: 'rice-and-dough', label: 'Rice & Dough', icon: 'bi-circle-fill' },
+    container.innerHTML = "";
 
-        { value: 'cooking-technique', label: 'Cooking Technique', icon: 'bi-tools' },
-        { value: 'stovetop', label: 'Stovetop', icon: 'bi-fire' },
-        { value: 'baking', label: 'Baking', icon: 'bi-window' },
-        { value: 'grilling', label: 'Grilling', icon: 'bi-bricks' },
-        { value: 'roasting', label: 'Roasting', icon: 'bi-thermometer-half' },
-        { value: 'air-frying', label: 'Air Frying', icon: 'bi-wind' }
-    ];
-
-    let selectedCategories = [];
-    let filteredCategories = [...categories];
-
-    function initializeComponent() {
-        renderCategoryOptions();
-        updateSelectedDisplay();
-        
-        // Prevent dropdown from closing when clicking inside
-        document.getElementById('categoryDropdownMenu').addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
+    if (filteredCategories.length === 0) {
+        noResultsMsg.classList.remove('d-none');
+        return;
     }
 
-    function renderCategoryOptions() {
-        const optionsList = document.getElementById('categoryOptionsList');
-        
-        if (filteredCategories.length === 0) {
-            optionsList.innerHTML = `
-                <div class="px-3 py-2 text-muted text-center">
-                    <i class="bi bi-search me-2"></i>No categories found
-                </div>
-            `;
-            return;
-        }
+    noResultsMsg.classList.add('d-none');
 
-        optionsList.innerHTML = filteredCategories.map(category => `
-            <div class="px-3 py-2 multiselect-option ${selectedCategories.includes(category.value) ? 'selected' : ''}" 
-                    onclick="toggleCategory('${category.value}')"
-                    style="cursor: pointer;">
-                <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="bi ${selectedCategories.includes(category.value) ? 'bi-check-square-fill text-warning' : 'bi-square'} fs-5"></i>
-                    </div>
-                    <i class="bi ${category.icon} me-2 ${selectedCategories.includes(category.value) ? 'text-warning' : 'text-muted'}"></i>
-                    <span class="${selectedCategories.includes(category.value) ? 'fw-semibold' : ''}">${category.label}</span>
-                </div>
+    filteredCategories.forEach(cat => {
+        const li = document.createElement("li");
+        li.className = "category-option";
+        
+        const isSelected = selectedCategories.includes(cat.id);
+        
+        li.innerHTML = `
+            <div class="category-option-content ${isSelected ? 'selected' : ''}" onclick="toggleCategory(${cat.id})">
+                <input class="form-check-input category-checkbox m-2 me-3" type="checkbox" value="${cat.id}" id="cat-${cat.id}" ${isSelected ? 'checked' : ''} onchange="event.stopPropagation(); toggleCategory(${cat.id})">
+                <i class="bi ${cat.icon || 'bi-tag'} category-icon"></i>
+                <label class="category-label" for="cat-${cat.id}">${cat.label}</label>
             </div>
-        `).join('');
+        `;
+        container.appendChild(li);
+    });
+}
+
+function toggleCategory(id) {
+    id = parseInt(id);
+    const index = selectedCategories.indexOf(id);
+
+    if (index > -1) {
+        selectedCategories.splice(index, 1);
+    } else {
+        selectedCategories.push(id);
     }
 
-    function toggleCategory(value) {
-        if (selectedCategories.includes(value)) {
-            selectedCategories = selectedCategories.filter(cat => cat !== value);
-        } else {
-            selectedCategories.push(value);
-        }
-        
-        updateSelectedDisplay();
-        renderCategoryOptions();
-        updateHiddenInput();
+    updateHiddenInput();
+    updateSelectedDisplay();
+    renderCategoryOptions(); // Re-render to update selected state
+}
+
+function updateSelectedDisplay() {
+    const tagsContainer = document.getElementById("selectedTagsContainer");
+    const summary = document.getElementById("selectedCategorySummary");
+
+    if (selectedCategories.length === 0) {
+        summary.textContent = "Select categories..";
+        tagsContainer.innerHTML = "";
+        return;
     }
 
-    function updateSelectedDisplay() {
-        const tagsContainer = document.getElementById('selectedTagsContainer');
-        const displayContainer = document.getElementById('selectedCategoriesDisplay');
-        
-        if (selectedCategories.length === 0) {
-            tagsContainer.innerHTML = '<span class="text-muted">Select categories..</span>';
-            displayContainer.innerHTML = '<span class="text-secondary fst-italic">None selected</span>';
-        } else {
-            // Update tags in dropdown button
-            const tags = selectedCategories.map(value => {
-                const category = categories.find(cat => cat.value === value);
-                return `
-                    <span class="badge bg-warning text-white me-1 mb-1 d-inline-flex align-items-center">
-                        <i class="bi ${category.icon} me-1"></i>
-                        ${category.label}
-                        <button type="button" class="btn-close btn-close-dark ms-2 tag-remove" aria-label="Remove ${category.label}" style="font-size: 0.6em;" onclick="removeCategory('${value}', event)"></button>
-                    </span>
-                `;
-            }).join('');
-            
-            tagsContainer.innerHTML = tags;
-            
-            // Update display list
-            const selectedLabels = selectedCategories.map(value => {
-                const category = categories.find(cat => cat.value === value);
-                return `<i class="bi ${category.icon} me-1"></i>${category.label}`;
-            }).join(', ');
-            
-            displayContainer.innerHTML = selectedLabels;
-        }
+    const selected = categories.filter(c => selectedCategories.includes(c.id));
+    // Update summary text
+    if (selected.length === 1) {
+        summary.textContent = selected[0].label;
+    } else {
+        summary.textContent = `${selected.length} categories selected`;
     }
 
-    function removeCategory(value, event) {
-        event.stopPropagation();
-        event.preventDefault();
-        
-        selectedCategories = selectedCategories.filter(cat => cat !== value);
-        updateSelectedDisplay();
-        renderCategoryOptions();
-        updateHiddenInput();
-    }
+    // Update tags
+    tagsContainer.innerHTML = selected.map(c => `
+        <span class="badge category-tag">
+            <i class="bi ${c.icon || 'bi-tag'}"></i>
+            ${c.label}
+            <button type="button" class="tag-remove-btn rounded-circle" aria-label="Remove" onclick="removeCategory(${c.id})">
+                <i class="bi bi-x"></i>
+            </button>
+        </span>
+    `).join('');
+}
 
-    function updateHiddenInput() {
-        document.getElementById('recipeCategoriesInput').value = JSON.stringify(selectedCategories);
-    }
+function removeCategory(id) {
+    selectedCategories = selectedCategories.filter(catId => catId !== id);
+    updateHiddenInput();
+    updateSelectedDisplay();
+    renderCategoryOptions();
+}
 
-    function filterCategories(searchTerm) {
-        filteredCategories = categories.filter(category => 
-            category.label.toLowerCase().includes(searchTerm.toLowerCase())
+function updateHiddenInput() {
+    const jsonValue = JSON.stringify(selectedCategories);
+    document.getElementById("recipeCategoriesInput").value = jsonValue;
+    document.getElementById("jsonOutput").textContent = jsonValue;
+}
+
+function filterCategories(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) {
+        filteredCategories = [...categories];
+    } else {
+        filteredCategories = categories.filter(cat => 
+            cat.label.toLowerCase().includes(term)
         );
+    }
+    renderCategoryOptions();
+}
+
+// Initialize
+document.addEventListener("DOMContentLoaded", () => {
+    renderCategoryOptions();
+    updateSelectedDisplay();
+
+    // Search functionality
+    const searchInput = document.getElementById("categorySearchInput");
+    searchInput.addEventListener("input", (e) => {
+        filterCategories(e.target.value);
+    });
+
+    // Clear search when dropdown is closed
+    document.getElementById("categoryDropdownButton").addEventListener("hidden.bs.dropdown", () => {
+        searchInput.value = "";
+        filteredCategories = [...categories];
         renderCategoryOptions();
-    }
-
-    // Clear search when dropdown opens
-    document.getElementById('categoryDropdownButton').addEventListener('click', function() {
-        setTimeout(() => {
-            const searchInput = document.getElementById('categorySearch');
-            searchInput.value = '';
-            filteredCategories = [...categories];
-            renderCategoryOptions();
-            searchInput.focus();
-        }, 100);
     });
 
-    // Initialize component when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeComponent();
+    // Focus search input when dropdown opens
+    document.getElementById("categoryDropdownButton").addEventListener("shown.bs.dropdown", () => {
+        searchInput.focus();
     });
 
-    let ingredientCount = 1;
-    let stepCount = 1;
-    
-    // Photo upload preview
-    document.getElementById('recipePhoto').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('photoPreview');
-                const placeholder = document.querySelector('.upload-placeholder');
-                const previewContainer = document.querySelector('.photo-preview-container');
-                
-                preview.src = e.target.result;
-                previewContainer.classList.remove('d-none');
-                placeholder.style.display = 'none';
-            }
-            reader.readAsDataURL(file);
+    // Prevent dropdown from closing when clicking inside
+    document.getElementById("categoryDropdownMenu").addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+});
+
+let ingredientCount = 1;
+let stepCount = 1;
+
+// Photo upload preview
+document.getElementById('recipePhoto').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('photoPreview');
+            const placeholder = document.querySelector('.upload-placeholder');
+            const previewContainer = document.querySelector('.photo-preview-container');
+            
+            preview.src = e.target.result;
+            previewContainer.classList.remove('d-none');
+            placeholder.style.display = 'none';
         }
-    });
+        reader.readAsDataURL(file);
+    }
+});
 
-    // Delete photo functionality
-    document.getElementById('deletePhotoBtn').addEventListener('click', function(e) {
-        e.stopPropagation(); // Prevent triggering the file input
-        
-        const preview = document.getElementById('photoPreview');
-        const placeholder = document.querySelector('.upload-placeholder');
-        const previewContainer = document.querySelector('.photo-preview-container');
-        const fileInput = document.getElementById('recipePhoto');
-        
-        // Reset the file input
-        fileInput.value = '';
-        
-        // Hide preview and show placeholder
-        previewContainer.classList.add('d-none');
-        placeholder.style.display = 'block';
-        
-        // Clear the preview image source
-        preview.src = '';
-    });
+// Delete photo functionality
+document.getElementById('deletePhotoBtn').addEventListener('click', function(e) {
+    e.stopPropagation(); // Prevent triggering the file input
     
-    // Add ingredient function
-    function addIngredient() {
-        ingredientCount++;
-        const ingredientsList = document.getElementById('ingredientsList');
-        const newIngredient = document.createElement('div');
-        newIngredient.className = 'ingredient-item p-3 mb-3';
-        newIngredient.innerHTML = `
-            <div class="row g-2 align-items-center">
-                <div class="col-12 col-md-5">
-                    <input type="text" class="form-control recipe-input" 
-                        name="ingredient_name[]" placeholder="Ingredient name">
-                </div>
-                <div class="col-12 col-md-3">
-                    <input type="text" class="form-control recipe-input" 
-                        name="ingredient_amount[]" placeholder="Amount">
-                </div>
-                <div class="col-10 col-md-3">
-                    <input type="text" class="form-control recipe-input" 
-                        name="ingredient_unit[]" placeholder="Unit">
-                </div>
-                <div class="col-2 col-md-1 d-flex justify-content-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeIngredient(this)">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
+    const preview = document.getElementById('photoPreview');
+    const placeholder = document.querySelector('.upload-placeholder');
+    const previewContainer = document.querySelector('.photo-preview-container');
+    const fileInput = document.getElementById('recipePhoto');
+    
+    // Reset the file input
+    fileInput.value = '';
+    
+    // Hide preview and show placeholder
+    previewContainer.classList.add('d-none');
+    placeholder.style.display = 'block';
+    
+    // Clear the preview image source
+    preview.src = '';
+});
+
+// Add ingredient function
+function addIngredient() {
+    ingredientCount++;
+    const ingredientsList = document.getElementById('ingredientsList');
+    const newIngredient = document.createElement('div');
+    newIngredient.className = 'ingredient-item p-3 mb-3';
+    newIngredient.innerHTML = `
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-5">
+                <input type="text" class="form-control recipe-input" 
+                    name="ingredient_name[]" placeholder="Ingredient name">
             </div>
-        `;
-        ingredientsList.appendChild(newIngredient);
-        updateRemoveButtons('ingredient');
-    }
-    
-    // Remove ingredient function
-    function removeIngredient(button) {
-        button.closest('.ingredient-item').remove();
-        ingredientCount--;
-        updateRemoveButtons('ingredient');
-    }
-    
-    // Add step function
-    function addStep() {
-        stepCount++;
-        const stepsList = document.getElementById('stepsList');
-        const newStep = document.createElement('div');
-        newStep.className = 'step-item rounded-2 p-3 mb-3';
-        newStep.setAttribute('draggable', 'true');
-        newStep.innerHTML = `
-            <div class="d-flex align-items-start">
-                <span class="step-number d-inline-flex justify-content-center align-items-center text-white rounded-circle fw-bold">${stepCount}</span>
-                <div class="flex-fill">
-                    <textarea class="form-control recipe-textarea step-textarea mb-2" 
-                            name="step_description[]" rows="2" 
-                            placeholder="Explain this step in detail.."></textarea>
-                    <div class="step-photo-upload mt-2">
-                        <input type="file" name="step_photo[]" accept="image/*" class="d-none step-photo-input">
-                        <div class="step-photo-placeholder text-center rounded-2" onclick="this.previousElementSibling.click()">
-                            <i class="bi bi-camera me-2"></i>
-                            <span>Add photo</span>
-                        </div>
-                        <img class="step-photo-preview d-none w-100 object-fit-cover rounded-1 mt-2" alt="Step preview">
-                    </div>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeStep(this)" disabled>
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
+            <div class="col-12 col-md-3">
+                <input type="text" class="form-control recipe-input" 
+                    name="ingredient_amount[]" placeholder="Amount">
             </div>
-        `;
-        stepsList.appendChild(newStep);
-        updateRemoveButtons('step');
-        
-        // Add event listener for the new step photo input
-        const newPhotoInput = newStep.querySelector('.step-photo-input');
-        newPhotoInput.addEventListener('change', handleStepPhotoUpload);
-    }
-    
-    // Remove step function
-    function removeStep(button) {
-        button.closest('.step-item').remove();
-        stepCount--;
-        updateStepNumbers();
-        updateRemoveButtons('step');
-    }
-    
-    // Update step numbers
-    function updateStepNumbers() {
-        const stepNumbers = document.querySelectorAll('.step-number');
-        stepNumbers.forEach((num, index) => {
-            num.textContent = index + 1;
-        });
-    }
-    
-    // Update remove button states
-    function updateRemoveButtons(type) {
-        const items = document.querySelectorAll(type === 'ingredient' ? '.ingredient-item' : '.step-item');
-        const buttons = document.querySelectorAll(type === 'ingredient' ? 
-            '.ingredient-item .btn-outline-danger' : '.step-item .btn-outline-danger');
-        
-        buttons.forEach((button, index) => {
-            button.disabled = items.length === 1;
-        });
-    }
-    
-    // Initialize remove button states
+            <div class="col-10 col-md-3">
+                <input type="text" class="form-control recipe-input" 
+                    name="ingredient_unit[]" placeholder="Unit">
+            </div>
+            <div class="col-2 col-md-1 d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeIngredient(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    ingredientsList.appendChild(newIngredient);
     updateRemoveButtons('ingredient');
+}
+
+// Remove ingredient function
+function removeIngredient(button) {
+    button.closest('.ingredient-item').remove();
+    ingredientCount--;
+    updateRemoveButtons('ingredient');
+}
+
+// Add step function
+function addStep() {
+    stepCount++;
+    const stepsList = document.getElementById('stepsList');
+    const newStep = document.createElement('div');
+    newStep.className = 'step-item rounded-2 p-3 mb-3';
+    newStep.setAttribute('draggable', 'true');
+    newStep.innerHTML = `
+        <div class="d-flex align-items-start">
+            <span class="step-number d-inline-flex justify-content-center align-items-center text-white rounded-circle fw-bold">${stepCount}</span>
+            <div class="flex-fill">
+                <textarea class="form-control recipe-textarea step-textarea mb-2" 
+                        name="step_description[]" rows="2" 
+                        placeholder="Explain this step in detail.."></textarea>
+                <div class="step-photo-upload mt-2">
+                    <input type="file" name="step_photo[]" accept="image/*" class="d-none step-photo-input">
+                    <div class="step-photo-placeholder text-center rounded-2" onclick="this.previousElementSibling.click()">
+                        <i class="bi bi-camera me-2"></i>
+                        <span>Add photo</span>
+                    </div>
+                    <img class="step-photo-preview d-none w-100 object-fit-cover rounded-1 mt-2" alt="Step preview">
+                </div>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeStep(this)" disabled>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    stepsList.appendChild(newStep);
     updateRemoveButtons('step');
     
-    // Add event listeners for step photo uploads
-    function handleStepPhotoUpload(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            const stepItem = e.target.closest('.step-item');
-            const preview = stepItem.querySelector('.step-photo-preview');
-            const placeholder = stepItem.querySelector('.step-photo-placeholder');
-            
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.classList.remove('d-none');
-                placeholder.style.display = 'none';
-            }
-            reader.readAsDataURL(file);
-        }
-    }
+    // Add event listener for the new step photo input
+    const newPhotoInput = newStep.querySelector('.step-photo-input');
+    newPhotoInput.addEventListener('change', handleStepPhotoUpload);
+}
+
+// Remove step function
+function removeStep(button) {
+    button.closest('.step-item').remove();
+    stepCount--;
+    updateStepNumbers();
+    updateRemoveButtons('step');
+}
+
+// Update step numbers
+function updateStepNumbers() {
+    const stepNumbers = document.querySelectorAll('.step-number');
+    stepNumbers.forEach((num, index) => {
+        num.textContent = index + 1;
+    });
+}
+
+// Update remove button states
+function updateRemoveButtons(type) {
+    const items = document.querySelectorAll(type === 'ingredient' ? '.ingredient-item' : '.step-item');
+    const buttons = document.querySelectorAll(type === 'ingredient' ? 
+        '.ingredient-item .btn-outline-danger' : '.step-item .btn-outline-danger');
     
-    // Add event listener to initial step photo input
-    document.querySelector('.step-photo-input').addEventListener('change', handleStepPhotoUpload);
+    buttons.forEach((button, index) => {
+        button.disabled = items.length === 1;
+    });
+}
+
+// Initialize remove button states
+updateRemoveButtons('ingredient');
+updateRemoveButtons('step');
+
+// Add event listeners for step photo uploads
+function handleStepPhotoUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        const stepItem = e.target.closest('.step-item');
+        const preview = stepItem.querySelector('.step-photo-preview');
+        const placeholder = stepItem.querySelector('.step-photo-placeholder');
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            placeholder.style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+// Add event listener to initial step photo input
+document.querySelector('.step-photo-input').addEventListener('change', handleStepPhotoUpload);
 </script>
 <script> <?php include 'js/script.js'; ?> </script>
 </body>

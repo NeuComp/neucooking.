@@ -20,7 +20,6 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 $email = '';
 $first_name = '';
 $last_name = '';
-
 $logIn_errorMessage = '';
 $signUp_errorMessage = '';
 
@@ -37,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['logged_in'] = true;
             $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['role'] = $row['role'];
-            $_SESSION['email'] = $row['email'];
+            $_SESSION['first_name'] = $row['first_name'];
+            $_SESSION['last_name'] = $row['last_name'];
 
             if ($row["role"] == "admin") {
                 header("Location: $adminUrl");
@@ -67,9 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $_SESSION['logged_in'] = true;
             $_SESSION['user_id'] = $new_id;
-            $_SESSION['role'] = $role;
-            $_SESSION['email'] = $email;
-            
+            $_SESSION['first_name'] = $row['first_name'];
+            $_SESSION['last_name'] = $row['last_name'];
+
             header("Location: $homeUrl");
             exit();
         } else {
@@ -113,17 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php 
                                 if (!empty($logIn_errorMessage)) {
                                     echo "
-                                    <div class='alert alert-danger alert-dismissible fade show' role='alert'>
+                                    <div class='alert alert-danger fade show text-center' role='alert'>
                                         <strong>$logIn_errorMessage</strong>
-                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                                     </div>
                                     ";
                                 }
                                 if (!empty($signUp_errorMessage)) {
                                     echo "
-                                    <div class='alert alert-danger alert-dismissible fade show' role='alert'>
+                                    <div class='alert alert-danger fade show text-center' role='alert'>
                                         <strong>$signUp_errorMessage</strong>
-                                        <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
                                     </div>
                                     ";
                                 }
@@ -175,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             <label class="form-label d-block mb-2 fw-semibold" for="password">Password</label>
                                             <input type="password" class="form-input w-100 rounded-2" id="signup_password" name="signup_password" placeholder="Create a password" required>
                                         </div>
-                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm" disabled>
+                                        <button type="submit" name="signUp" class="btn btn-main-theme w-100 p-3 rounded-2 text-white fw-medium shadow-sm">
                                             Create Account
                                         </button>
                                     </form>
